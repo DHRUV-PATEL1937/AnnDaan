@@ -127,40 +127,26 @@
             </div>
         </div>
 
+        <!-- ⭐ NEW: Hidden Modal for Username Input -->
+        <div class="modal-overlay" id="usernameModal" style="display: none;">
+            <div class="modal-content">
+                <h3>Complete Your Profile</h3>
+                <p>Please choose a unique username to finish setting up your account.</p>
+                <form id="usernameForm">
+                    <div class="form-group">
+                        <div class="input-group neu-input">
+                            <input type="text" id="modalUsername" name="modalUsername" required autocomplete="username" placeholder=" ">
+                            <label for="modalUsername">Username</label>
+                        </div>
+                        <span class="error-message" id="modalUsernameError"></span>
+                    </div>
+                    <button type="submit" class="neu-button">Complete Signup</button>
+                </form>
+            </div>
+        </div>
+
+
         <script src="login.js"></script>
-
-        <script>
-            async function handleCredentialResponse(response) {
-                // The 'response.credential' is the secure ID Token from Google.
-                console.log("ID Token received from Google: " + response.credential);
-
-                // Send this token to your back-end for verification.
-                try {
-                    const res = await fetch('/api/auth/google-signin', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ token: response.credential }),
-                    });
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        console.log('Backend login success:', data);
-                        // On success, redirect to the user's dashboard or update the UI.
-                        window.location.href = '/dashboard';
-                    } else {
-                        // Handle login failure from the backend
-                        const errorData = await res.json();
-                        console.error('Backend login failed:', errorData.message);
-                        alert('Google Sign-In failed. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('An error occurred during fetch:', error);
-                    alert('Could not connect to the server. Please try again later.');
-                }
-            }
-        </script>
     </body>
 
 </html>

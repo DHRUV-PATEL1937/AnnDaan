@@ -565,3 +565,58 @@ body {
         gap: 16px;
     }
 }
+
+/* --- Styles for Username Modal (Added at the end) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: #e0e5ec;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 
+        20px 20px 60px #bec3cf,
+        -20px -20px 60px #ffffff;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+}
+
+.modal-overlay.visible .modal-content {
+    transform: scale(1);
+}
+
+.modal-content h3 {
+    color: #3d4468;
+    font-size: 1.75rem;
+    margin-bottom: 15px;
+}
+
+.modal-content p {
+    color: #9499b7;
+    margin-bottom: 30px;
+}
+
+/* Re-use existing form styles within the modal */
+.modal-content .form-group {
+    text-align: left;
+}

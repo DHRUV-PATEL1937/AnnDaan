@@ -74,31 +74,44 @@ app.get('/', (req, res) => {
   res.send('Server is up and running! Welcome to the authentication API.');
 });
 
-// --- Traditional Email/Password Signup Route ---
+// --- Traditional Email/Password Signup Route (UPDATED) ---
 app.post('/signup', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        // Destructure username from the request body
+        const { name, username, email, password } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ message: 'Full name, email, and password are required for signup.' });
+        // Validate all required fields
+        if (!name || !username || !email || !password) {
+            return res.status(400).json({ message: 'Full name, username, email, and password are required.' });
         }
         if (password.length < 6) {
           return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
         }
+        if (username.length < 3) {
+            return res.status(400).json({ message: 'Username must be at least 3 characters long.' });
+        }
 
-        const existingUser = await User.findOne({ email: email });
+        // Check if either the email or username already exists
+        const existingUser = await User.findOne({ $or: [{ email: email }, { username: username }] });
         if (existingUser) {
-            console.log(`Signup attempt failed: User with email ${email} already exists.`);
-            return res.status(409).json({ message: 'An account with this email already exists. Please try logging in or using Google Sign-In.' });
+            let message = 'An account with this email or username already exists.';
+            if (existingUser.email === email) {
+                message = 'An account with this email already exists. Please try logging in.';
+            } else if (existingUser.username === username) {
+                message = 'This username is already taken. Please choose another one.';
+            }
+            console.log(`Signup attempt failed: ${message}`);
+            return res.status(409).json({ message });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
+        // Create the new user with the username
         const newUser = new User({
             name,
+            username, // Save the username
             email,
             password: hashedPassword,
-            username: email,
             googleId: null, 
             createdAt: Date.now(),
             lastLoginAt: Date.now()
@@ -115,7 +128,7 @@ app.post('/signup', async (req, res) => {
         let statusCode = 500;
 
         if (error.code === 11000) {
-            errorMessage = 'An account with this email or username already exists. Please choose a different one.';
+            errorMessage = 'An account with this email or username already exists.';
             statusCode = 409;
         } else if (error.name === 'ValidationError') {
             const validationErrors = Object.values(error.errors).map(err => err.message);
@@ -174,10 +187,10 @@ app.post('/login', async (req, res) => {
     }
 });
 
-// --- Google Sign-In/Signup Route ---
+// --- Google Sign-In/Signup Route (UPDATED) ---
 app.post('/api/auth/google-signin', async (req, res) => {
     try {
-        const { token, phone, address } = req.body;
+        const { token } = req.body;
 
         const ticket = await client.verifyIdToken({
             idToken: token,
@@ -188,86 +201,121 @@ app.post('/api/auth/google-signin', async (req, res) => {
 
         let user = await User.findOne({ googleId: googleId });
 
+        // If user exists and has a username, log them in directly
+        if (user && user.username) {
+            console.log('✅ Returning Google user found by Google ID:', user.email);
+            user.lastLoginAt = Date.now();
+            await user.save();
+
+            const appTokenPayload = { id: user._id, email: user.email, name: user.name }; 
+            const appToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '1h' });
+
+            return res.status(200).json({
+                message: "Login successful!",
+                appToken: appToken, 
+                user: { id: user._id, name, email, picture, phone: user.phone, address: user.address }
+            });
+        }
+        
+        // If user does not exist by googleId, check by email
         if (!user) {
             user = await User.findOne({ email: email });
-
             if (user) {
-                if (user.googleId && user.googleId !== googleId) {
-                    console.warn(`Google sign-in failed: Email ${email} is linked to a different Google ID.`);
-                    return res.status(409).json({ message: 'This email is already linked to a different Google account. Please log in with that account.' });
-                }
+                // This is a traditional user, link their Google ID
                 user.googleId = googleId;
-                user.name = name;
                 user.picture = picture;
-                console.log(`✅ Existing user ${user.email} found by email, linking new Google ID.`);
-            } else {
-                user = new User({
-                    googleId,
-                    name,
-                    email,
-                    picture,
-                    phone: phone || null,
-                    address: address || null,
-                    createdAt: Date.now(),
-                    username: null,
-                    password: null,
-                });
-                console.log('✅ New user created via Google Sign-In:', user.email);
+                await user.save();
+                console.log(`✅ Linked Google ID to existing user: ${email}`);
+                // Since they have a username already, we can log them in
+                const appTokenPayload = { id: user._id, email: user.email, name: user.name };
+                const appToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '1h' });
+                return res.status(200).json({ message: "Login successful!", appToken, user });
             }
-        } else {
-            console.log('✅ User found by Google ID, logging in:', user.email);
         }
 
+        // If user is brand new (not found by googleId or email)
+        // Or if they are a returning Google user who never set a username
+        if (!user || !user.username) {
+            // Create a temporary token with Google info
+            const tempTokenPayload = { googleId, name, email, picture };
+            const tempToken = jwt.sign(tempTokenPayload, JWT_SECRET, { expiresIn: '15m' });
+
+            console.log(`✅ New Google user detected. Prompting for username for email: ${email}`);
+            // Send back a response indicating a username is required
+            return res.status(202).json({
+                message: "Username required to complete registration.",
+                usernameRequired: true,
+                tempToken: tempToken // Send this temporary token to the client
+            });
+        }
+
+    } catch (error) {
+        console.error("❌ Error in Google sign-in process:", error);
+        res.status(500).json({ message: "An unexpected server error occurred." });
+    }
+});
+
+// ⭐ NEW ENDPOINT: To complete Google signup with a username
+app.post('/api/auth/complete-google-signup', async (req, res) => {
+    try {
+        const { tempToken, username } = req.body;
+
+        if (!tempToken || !username) {
+            return res.status(400).json({ message: 'A temporary token and username are required.' });
+        }
+
+        // Verify the temporary token
+        const decoded = jwt.verify(tempToken, JWT_SECRET);
+        const { googleId, name, email, picture } = decoded;
+
+        // Check if username is already taken
+        const existingUsername = await User.findOne({ username: username });
+        if (existingUsername) {
+            return res.status(409).json({ message: 'This username is already taken. Please choose another one.' });
+        }
+
+        // Find user by googleId (they might exist from a previous failed attempt)
+        let user = await User.findOne({ googleId: googleId });
+
+        if (user) {
+            // Update existing user who was missing a username
+            user.username = username;
+            console.log(`✅ Updating existing Google user with new username: ${username}`);
+        } else {
+            // Create a brand new user
+            user = new User({
+                googleId,
+                name,
+                email,
+                picture,
+                username,
+                createdAt: Date.now(),
+            });
+            console.log(`✅ Finalizing new Google user with username: ${username}`);
+        }
+        
         user.lastLoginAt = Date.now();
-        user.name = name;
-        user.picture = picture;
-        if (phone !== undefined) user.phone = phone;
-        if (address !== undefined) user.address = address;
         await user.save();
 
-        const appTokenPayload = { id: user._id, googleId: user.googleId, email: user.email, name: user.name }; 
+        // Now create the final, long-term login token
+        const appTokenPayload = { id: user._id, email: user.email, name: user.name };
         const appToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '1h' });
 
-        res.status(200).json({
-            message: "Login successful!",
-            appToken: appToken, 
-            user: {
-                id: user._id, 
-                name: user.name,
-                email: user.email,
-                picture: user.picture,
-                phone: user.phone,
-                address: user.address,
-            }
+        res.status(201).json({
+            message: "Registration complete! You are now logged in.",
+            appToken,
+            user: { id: user._id, name, email, picture, phone: user.phone, address: user.address }
         });
 
     } catch (error) {
-        console.error("❌ Error in Google sign-in process:", error); 
-        
-        let errorMessage = "Google Sign-In failed. Please try again.";
-        let statusCode = 401;
-
-        if (error.code === 11000) {
-            errorMessage = 'An account with this email or Google ID already exists. Please log in using the correct method.';
-            statusCode = 409;
-        } else if (error.name === 'ValidationError') {
-            const validationErrors = Object.values(error.errors).map(err => err.message);
-            errorMessage = `Validation error: ${validationErrors.join(', ')}`;
-            statusCode = 400;
-        } else if (error.name === 'MongoServerError') {
-            errorMessage = `Database error: ${error.message}`;
-            statusCode = 500;
-        } else if (error.message.includes('Invalid token') || error.message.includes('Token used too early') || error.message.includes('Token expired')) {
-            errorMessage = 'Invalid Google token. Please try signing in again.';
-            statusCode = 401;
-        } else {
-            errorMessage = `An unexpected server error occurred: ${error.message}`;
-            statusCode = 500;
+        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
         }
-        
-        res.status(statusCode).json({ message: errorMessage });
+        console.error("❌ Error completing Google signup:", error);
+        res.status(500).json({ message: 'An unexpected server error occurred.' });
     }
 });
+
 
 // --- Forgot Password Request Endpoint ---
 app.post('/api/auth/forgot-password', async (req, res) => {
