@@ -17,30 +17,28 @@ const PORT = process.env.PORT || 5000;
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const JWT_SECRET = process.env.JWT_SECRET;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/anndan'; 
-
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/anndan';
 const EMAIL_SERVICE = process.env.EMAIL_SERVICE;
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 
-if (!GOOGLE_CLIENT_ID || !JWT_SECRET || !EMAIL_USER || !EMAIL_PASS) {
-  console.error('CRITICAL ERROR: GOOGLE_CLIENT_ID, JWT_SECRET, EMAIL_USER, and EMAIL_PASS must be set in your .env file.');
-  process.exit(1); 
+if (!GOOGLE_CLIENT_ID || !JWT_SECRET || !MONGO_URI || !EMAIL_USER || !EMAIL_PASS) {
+    console.error('CRITICAL ERROR: Ensure GOOGLE_CLIENT_ID, JWT_SECRET, MONGO_URI, EMAIL_USER, and EMAIL_PASS are set in .env');
+    process.exit(1);
 }
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-const User = require('./models/User'); 
+const User = require('./models/User');
 
 // --- 2. DATABASE CONNECTION ---
 mongoose.connect(MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
 })
 .then(() => console.log('✅ MongoDB connected successfully!'))
 .catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-  console.error('Please ensure your MONGO_URI is correct and MongoDB is running.');
-  process.exit(1);
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
 });
 
 // --- 3. MIDDLEWARE ---
@@ -52,17 +50,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
-    if (token == null) {
-      console.warn('Authentication failed: No token provided.');
-      return res.sendStatus(401);
-    }
-
+    if (token == null) return res.sendStatus(401);
     jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-          console.error('Authentication failed: Invalid token.', err.message);
-          return res.sendStatus(403);
-        }
+        if (err) return res.sendStatus(403);
         req.user = user;
         next();
     });
@@ -71,7 +61,7 @@ function authenticateToken(req, res, next) {
 // --- 4. API ENDPOINTS ---
 
 app.get('/', (req, res) => {
-  res.send('Server is up and running! Welcome to the authentication API.');
+    res.send('Server is up and running! Welcome to the authentication API.');
 });
 
 // --- Traditional Email/Password Signup Route (UPDATED) ---
@@ -85,7 +75,7 @@ app.post('/signup', async (req, res) => {
             return res.status(400).json({ message: 'Full name, username, email, and password are required.' });
         }
         if (password.length < 6) {
-          return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+            return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
         }
         if (username.length < 3) {
             return res.status(400).json({ message: 'Username must be at least 3 characters long.' });
@@ -146,19 +136,17 @@ app.post('/login', async (req, res) => {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required for login.' });
+            return res.status(400).json({ message: 'Email and password are required.' });
         }
 
         const user = await User.findOne({ email: email });
-        if (!user || !user.password) { 
-            console.log(`Login attempt failed for ${email}: User not found or has no password.`);
-            return res.status(400).json({ message: 'Invalid email or password.' });
+        if (!user || !user.password) {
+            return res.status(400).json({ message: 'Invalid credentials or user signed up with Google.' });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            console.log(`Login attempt failed for ${email}: Incorrect password.`);
-            return res.status(400).json({ message: 'Invalid email or password.' });
+            return res.status(400).json({ message: 'Invalid credentials.' });
         }
 
         user.lastLoginAt = Date.now();
@@ -168,22 +156,15 @@ app.post('/login', async (req, res) => {
         const appToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '1h' });
 
         console.log(`✅ Traditional user logged in successfully: ${user.email}`);
-        res.status(200).json({ 
+        res.status(200).json({
             message: 'Login successful!',
             appToken: appToken,
-            user: { 
-                id: user._id, 
-                name: user.name, 
-                email: user.email,
-                picture: user.picture, 
-                phone: user.phone,
-                address: user.address,
-            } 
+            user: { id: user._id, name: user.name, email: user.email }
         });
 
     } catch (error) {
         console.error('❌ Login error:', error);
-        res.status(500).json({ message: 'Login failed due to a server error. Please try again.' });
+        res.status(500).json({ message: 'Login failed due to a server error.' });
     }
 });
 
@@ -197,7 +178,7 @@ app.post('/api/auth/google-signin', async (req, res) => {
             audience: GOOGLE_CLIENT_ID,
         });
 
-        const { sub: googleId, name, email, picture } = ticket.getPayload(); 
+        const { sub: googleId, name, email, picture } = ticket.getPayload();
 
         let user = await User.findOne({ googleId: googleId });
 
@@ -321,61 +302,44 @@ app.post('/api/auth/complete-google-signup', async (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-
     if (!email) {
-      return res.status(400).json({ message: 'Email is required to reset password.' });
+      return res.status(400).json({ message: 'Email is required.' });
     }
 
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ email });
+
+    // *** KEY CHANGE IS HERE ***
+    // If user does not exist, return a 404 error.
     if (!user) {
-      console.warn(`Forgot password request for non-existent email: ${email}`);
-      return res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+      console.warn(`Forgot password attempt for non-existent email: ${email}`);
+      return res.status(404).json({ message: 'An account with this email does not exist.' });
     }
 
-    const token = crypto.randomBytes(20).toString('hex');
-    const expiry = Date.now() + 3600000; // 1 hour
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = Date.now() + 600000; // 10 minutes from now
 
-    user.resetPasswordToken = token;
+    user.resetPasswordToken = otp;
     user.resetPasswordExpires = expiry;
     await user.save();
 
+    // Setup email transporter
     const transporter = nodemailer.createTransport({
       service: EMAIL_SERVICE,
-      auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS,
-      },
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
     });
-
-    const resetLink = `http://localhost:5000/reset-password.html?token=${token}`; 
 
     const mailOptions = {
       to: user.email,
-      from: EMAIL_USER,
-      subject: 'Password Reset Request',
-      html: `
-        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
-            <h2 style="color: #0056b3;">Password Reset Request</h2>
-            <p>Hello ${user.name || user.email},</p>
-            <p>You are receiving this email because we received a password reset request for your account.</p>
-            <p>Please click on the button below to reset your password:</p>
-            <p style="text-align: center; margin: 20px 0;">
-                <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Your Password</a>
-            </p>
-            <p>This link will expire in 1 hour. If you do not reset your password within this time, you will need to submit another request.</p>
-            <p>If you did not request a password reset, please ignore this email or reply to let us know. Your password will remain unchanged.</p>
-            <p>Thank you,</p>
-            <p>Your App Team</p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="font-size: 0.8em; color: #777;">If you're having trouble clicking the "Reset Your Password" button, copy and paste the URL below into your web browser:</p>
-            <p style="font-size: 0.8em; color: #777; word-break: break-all;">${resetLink}</p>
-        </div>
-      `,
+      from: `Your App Name <${EMAIL_USER}>`,
+      subject: 'Your Password Reset OTP',
+      html: `<p>Your One-Time Password (OTP) to reset your password is: <strong>${otp}</strong></p>`,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Password reset email sent to: ${user.email}`);
-    res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
+    console.log(`✅ Password reset OTP sent to: ${user.email}`);
+    // Send a success message confirming that the OTP was sent.
+    res.status(200).json({ message: 'An OTP has been sent to your email address.' });
 
   } catch (error) {
     console.error('❌ Forgot password error:', error);
@@ -383,100 +347,81 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   }
 });
 
-// Endpoint to handle password reset (when user submits new password)
-app.post('/api/auth/reset-password', async (req, res) => {
+// 2. Reset Password with OTP
+app.post('/api/auth/reset-with-otp', async (req, res) => {
     try {
-        const { token, newPassword } = req.body;
+        const { email, otp, newPassword } = req.body;
 
-        if (!token || !newPassword) {
-            return res.status(400).json({ message: 'Token and new password are required.' });
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({ message: 'Email, OTP, and new password are required.' });
         }
         if (newPassword.length < 6) {
-            return res.status(400).json({ message: 'New password must be at least 6 characters long.' });
+            return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
         }
 
-        const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
-        });
-
+        const user = await User.findOne({ email: email });
         if (!user) {
-            console.warn(`Password reset attempt with invalid or expired token: ${token}`);
-            return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
+            return res.status(400).json({ message: 'Invalid request.' });
+        }
+
+        if (user.resetPasswordToken !== otp || user.resetPasswordExpires < Date.now()) {
+            return res.status(400).json({ message: 'OTP is invalid or has expired.' });
         }
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-
         user.password = hashedPassword;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
-        user.lastLoginAt = Date.now();
         await user.save();
 
         console.log(`✅ Password successfully reset for user: ${user.email}`);
-        res.status(200).json({ message: 'Your password has been successfully reset. You can now log in.' });
+        res.status(200).json({ message: 'Your password has been successfully updated.' });
 
     } catch (error) {
         console.error('❌ Reset password error:', error);
-        res.status(500).json({ message: 'Error resetting password. Please try again later.' });
+        res.status(500).json({ message: 'Error resetting password.' });
     }
 });
 
+// --- PROTECTED USER PROFILE ROUTES ---
 
-// --- Protected Route: Fetch User Profile ---
+// Fetch User Profile
 app.get('/api/profile', authenticateToken, async (req, res) => {
     try {
-        const userProfile = await User.findById(req.user.id); 
+        // req.user is populated by the authenticateToken middleware
+        const userProfile = await User.findById(req.user.id).select('-password'); // Exclude password from result
         if (!userProfile) {
-            return res.status(404).json({ message: "User not found in database." });
+            return res.status(404).json({ message: "User not found." });
         }
-        
-        res.json({
-            message: "User profile data retrieved successfully.",
-            user: {
-                id: userProfile._id,
-                name: userProfile.name,
-                email: userProfile.email,
-                picture: userProfile.picture,
-                phone: userProfile.phone,
-                address: userProfile.address,
-                lastLoginAt: userProfile.lastLoginAt,
-                createdAt: userProfile.createdAt
-            }
-        });
-    } catch (error) {
+        res.json({ user: userProfile });
+    } catch (error){
         console.error("❌ Error fetching user profile:", error);
         res.status(500).json({ message: "Server error fetching profile." });
     }
 });
 
-// --- Protected Route: Update User Profile ---
+// Update User Profile
 app.put('/api/profile', authenticateToken, async (req, res) => {
     const { name, phone, address } = req.body;
-
     try {
-        const user = await User.findById(req.user.id); 
+        const user = await User.findById(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
         }
 
-        if (name !== undefined) user.name = name;
-        if (phone !== undefined) user.phone = phone;
-        if (address !== undefined) user.address = address;
+        // Update fields if they are provided in the request
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (address) user.address = address;
 
-        await user.save();
+        const updatedUser = await user.save();
+
+        const userResponse = { ...updatedUser.toObject() };
+        delete userResponse.password; // Ensure password is not sent back
 
         res.status(200).json({
             message: 'Profile updated successfully!',
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                picture: user.picture,
-                phone: user.phone,
-                address: user.address,
-                lastLoginAt: user.lastLoginAt
-            }
+            user: userResponse
         });
     } catch (error) {
         console.error('❌ Error updating user profile:', error);
@@ -488,5 +433,4 @@ app.put('/api/profile', authenticateToken, async (req, res) => {
 // --- 5. START THE SERVER ---
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
-    console.log(`Access the server at: http://localhost:${PORT}`);
 });
