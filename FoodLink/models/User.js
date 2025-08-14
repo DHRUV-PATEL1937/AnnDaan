@@ -1,33 +1,41 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
+  // For traditional logins (username can be same as email)
   username: {
     type: String,
-    unique: false,
-    sparse: true,
+    unique: true,
+    sparse: true, // Allows multiple documents to have a null username (e.g., Google users)
     trim: true,
   },
+  // Only for traditional logins (hashed password)
   password: {
     type: String,
-    sparse: true,
+    sparse: true, // Allows null for users who sign up only with Google
   },
-  googleId: {
-    type: String,
-    unique: true,
-    sparse: true,
-  },
+
+  // For Google Sign-Ins
+  // googleId: {
+  //   type: String,
+  //   unique: true,
+  //   sparse: true, // Allows null for users who sign up with traditional username/password
+  // },
+
+  // Required for ALL users (Google or Traditional)
   name: {
     type: String,
-    required: true,
+    required: true, // User's full name is required
     trim: true,
   },
   email: {
     type: String,
-    unique: true,
-    required: true,
-    lowercase: true,
+    unique: true, // Each email must be unique across all users
+    required: true, // Email is required for all users
+    lowercase: true, // Store email in lowercase
     trim: true,
   },
+
+  // Optional additional user details
   picture: {
     type: String,
     default: null,
@@ -40,6 +48,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+
+  // Timestamps
   createdAt: {
     type: Date,
     default: Date.now,
@@ -48,7 +58,7 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  // ⭐ NEW: Fields for password reset functionality
+  // Fields for password reset functionality
   resetPasswordToken: {
     type: String,
     default: null,
@@ -59,4 +69,4 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

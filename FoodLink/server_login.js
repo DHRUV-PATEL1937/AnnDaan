@@ -281,21 +281,16 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     const user = await User.findOne({ email: email });
     if (!user) {
       console.warn(`Forgot password request for non-existent email: ${email}`);
-      // For security, always send a generic success message to prevent user enumeration
       return res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
     }
 
-    // Generate a unique token
     const token = crypto.randomBytes(20).toString('hex');
-    // Set token expiry (e.g., 1 hour from now)
-    const expiry = Date.now() + 3600000; // 1 hour in milliseconds
+    const expiry = Date.now() + 3600000; // 1 hour
 
-    // Save the token and expiry to the user in the database
     user.resetPasswordToken = token;
     user.resetPasswordExpires = expiry;
     await user.save();
 
-    // Create a Nodemailer transporter
     const transporter = nodemailer.createTransport({
       service: EMAIL_SERVICE,
       auth: {
@@ -304,10 +299,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       },
     });
 
-    // Construct the reset link. IMPORTANT: Replace 'http://localhost:5000' with your actual frontend domain in production.
     const resetLink = `http://localhost:5000/reset-password.html?token=${token}`; 
 
-    // Email options
     const mailOptions = {
       to: user.email,
       from: EMAIL_USER,
@@ -332,7 +325,6 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       `,
     };
 
-    // Send the email
     await transporter.sendMail(mailOptions);
     console.log(`✅ Password reset email sent to: ${user.email}`);
     res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
@@ -343,7 +335,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
   }
 });
 
-// ⭐ NEW: Endpoint to handle password reset (when user submits new password)
+// Endpoint to handle password reset (when user submits new password)
 app.post('/api/auth/reset-password', async (req, res) => {
     try {
         const { token, newPassword } = req.body;
@@ -355,10 +347,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
             return res.status(400).json({ message: 'New password must be at least 6 characters long.' });
         }
 
-        // Find the user by the reset token and ensure it's not expired
         const user = await User.findOne({
             resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() } // Token must be greater than current time (not expired)
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
@@ -366,14 +357,12 @@ app.post('/api/auth/reset-password', async (req, res) => {
             return res.status(400).json({ message: 'Password reset token is invalid or has expired.' });
         }
 
-        // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update user's password and clear reset token fields
         user.password = hashedPassword;
-        user.resetPasswordToken = undefined; // Clear the token
-        user.resetPasswordExpires = undefined; // Clear the expiry
-        user.lastLoginAt = Date.now(); // Update last login as a password reset is a form of login
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        user.lastLoginAt = Date.now();
         await user.save();
 
         console.log(`✅ Password successfully reset for user: ${user.email}`);
