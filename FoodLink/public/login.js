@@ -7,7 +7,23 @@ class NeumorphismLoginForm {
         this.passwordToggle = document.getElementById('passwordToggle');
         this.submitButton = this.form.querySelector('.login-btn');
         this.successMessage = document.getElementById('successMessage');
-        this.socialButtons = document.querySelectorAll('.neu-social');
+        this.socialButtons = document.querySelectorAll('.neu-social'); // Keep for general social buttons if any besides Google
+        
+        // ⭐ NEW: Element to display server-side errors
+        this.serverErrorMessage = document.createElement('p');
+        this.serverErrorMessage.style.cssText = `
+            color: #d63031;
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            max-width: 100%;
+            word-wrap: break-word;
+        `;
+        this.serverErrorMessage.id = 'serverErrorMessage';
+        // Insert it right after the login button
+        this.form.insertBefore(this.serverErrorMessage, this.submitButton.nextSibling);
         
         this.init();
     }
@@ -15,7 +31,7 @@ class NeumorphismLoginForm {
     init() {
         this.bindEvents();
         this.setupPasswordToggle();
-        this.setupSocialButtons();
+        // this.setupSocialButtons(); // Removed as Google handles its own button
         this.setupNeumorphicEffects();
     }
     
@@ -45,22 +61,7 @@ class NeumorphismLoginForm {
         });
     }
     
-    setupSocialButtons() {
-        this.socialButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                this.animateSoftPress(button);
-                
-                // Determine which social platform based on SVG content
-                const svgPath = button.querySelector('svg path').getAttribute('d');
-                let provider = 'Social';
-                if (svgPath.includes('22.56')) provider = 'Google';
-                else if (svgPath.includes('github')) provider = 'GitHub';
-                else if (svgPath.includes('23.953')) provider = 'Twitter';
-                
-                this.handleSocialLogin(provider, button);
-            });
-        });
-    }
+    // Removed handleSocialLogin and setupSocialButtons as Google GSI client handles its own button clicks
     
     setupNeumorphicEffects() {
         // Add hover effects to all neumorphic elements
@@ -145,7 +146,7 @@ class NeumorphismLoginForm {
             return false;
         }
         
-        if (password.length < 6) {
+        if (password.length < 6) { // Make sure this matches your server-side validation!
             this.showError('password', 'Password must be at least 6 characters');
             return false;
         }
@@ -168,6 +169,9 @@ class NeumorphismLoginForm {
         setTimeout(() => {
             input.style.animation = '';
         }, 500);
+
+        // Hide server error message if it's visible
+        this.clearServerError();
     }
     
     clearError(field) {
@@ -180,58 +184,128 @@ class NeumorphismLoginForm {
             errorElement.textContent = '';
         }, 300);
     }
+
+    // ⭐ NEW: Methods for displaying/clearing server-side errors
+    showServerError(message) {
+        this.serverErrorMessage.textContent = message;
+        this.serverErrorMessage.style.opacity = '1';
+    }
+
+    clearServerError() {
+        this.serverErrorMessage.textContent = '';
+        this.serverErrorMessage.style.opacity = '0';
+    }
     
     async handleSubmit(e) {
         e.preventDefault();
         
+        this.clearServerError(); // Clear any previous server errors on new submission
+
         const isEmailValid = this.validateEmail();
         const isPasswordValid = this.validatePassword();
         
         if (!isEmailValid || !isPasswordValid) {
             this.animateSoftPress(this.submitButton);
+            this.showServerError('Please fix the errors in the form before submitting.'); // General client-side error
             return;
         }
         
         this.setLoading(true);
         
+        const email = this.emailInput.value.trim();
+        const password = this.passwordInput.value;
+
         try {
-            // Simulate soft authentication
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Show neumorphic success
-            this.showNeumorphicSuccess();
+            // ⭐ MODIFIED: Send email and password to your server's /login endpoint
+            const response = await fetch('http://localhost:5000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password }) // Send email and password
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log('Login successful:', data);
+                // ⭐ Store the received JWT (appToken)
+                if (data.appToken) {
+                    localStorage.setItem('jwtToken', data.appToken);
+                }
+                // ⭐ Store basic user info if needed
+                if (data.user) {
+                    localStorage.setItem('userEmail', data.user.email);
+                    localStorage.setItem('userName', data.user.name);
+                    // Add other user data as needed: localStorage.setItem('userId', data.user.id);
+                }
+                this.showNeumorphicSuccess(); // Show success message
+            } else {
+                console.error('Login failed:', data);
+                this.showServerError(data.message || 'Login failed. Please try again.');
+                this.animateSoftPress(this.submitButton);
+            }
         } catch (error) {
-            this.showError('password', 'Login failed. Please try again.');
+            console.error('Network error during login:', error);
+            this.showServerError('Network error. Please check your connection and server.');
+            this.animateSoftPress(this.submitButton);
         } finally {
             this.setLoading(false);
         }
     }
     
-    async handleSocialLogin(provider, button) {
-        console.log(`Initiating ${provider} login...`);
-        
-        // Add loading state to button
-        button.style.pointerEvents = 'none';
-        button.style.opacity = '0.7';
-        
+    // ⭐ NEW: This function handles the Google Sign-In response
+    async handleGoogleCredentialResponse(response) {
+        this.clearServerError(); // Clear any previous errors
+        this.setLoading(true); // Show loading for Google login
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            console.log(`Redirecting to ${provider} authentication...`);
-            // window.location.href = `/auth/${provider.toLowerCase()}`;
+            const res = await fetch('http://localhost:5000/api/auth/google-signin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: response.credential }), // Send the Google ID token
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                console.log('Google login successful:', data);
+                // ⭐ Store the received JWT (appToken)
+                if (data.appToken) {
+                    localStorage.setItem('jwtToken', data.appToken);
+                }
+                // ⭐ Store basic user info if needed
+                if (data.user) {
+                    localStorage.setItem('userEmail', data.user.email);
+                    localStorage.setItem('userName', data.user.name);
+                    // localStorage.setItem('userId', data.user.id);
+                    // localStorage.setItem('userPicture', data.user.picture);
+                }
+                this.showNeumorphicSuccess(); // Show success message and redirect
+            } else {
+                console.error('Google login failed:', data);
+                this.showServerError(data.message || 'Google Sign-In failed. Please try again.');
+            }
         } catch (error) {
-            console.error(`${provider} authentication failed: ${error.message}`);
+            console.error('An error occurred during Google sign-in fetch:', error);
+            this.showServerError('Could not connect to the server for Google Sign-In. Please try again later.');
         } finally {
-            button.style.pointerEvents = 'auto';
-            button.style.opacity = '1';
+            this.setLoading(false);
         }
     }
-    
+
     setLoading(loading) {
         this.submitButton.classList.toggle('loading', loading);
         this.submitButton.disabled = loading;
         
         // Disable social buttons during login
-        this.socialButtons.forEach(button => {
+        document.querySelectorAll('.g_id_signin button').forEach(button => { // Target Google button more specifically
+             button.style.pointerEvents = loading ? 'none' : 'auto';
+             button.style.opacity = loading ? '0.6' : '1';
+        });
+        this.socialButtons.forEach(button => { // Existing social buttons (if any)
             button.style.pointerEvents = loading ? 'none' : 'auto';
             button.style.opacity = loading ? '0.6' : '1';
         });
@@ -259,7 +333,7 @@ class NeumorphismLoginForm {
         // Simulate redirect
         setTimeout(() => {
             console.log('Redirecting to dashboard...');
-            // window.location.href = '/dashboard';
+            window.location.href = '/dashboard'; // ⭐ Redirect to your dashboard page
         }, 2500);
     }
 }
@@ -284,7 +358,20 @@ if (!document.querySelector('#neu-keyframes')) {
     document.head.appendChild(style);
 }
 
+// ⭐ NEW: Make the handleCredentialResponse global for Google GSI callback
+// This needs to be outside the class or attached to window
+window.handleCredentialResponse = async (response) => {
+    // Assuming NeumorphismLoginForm is globally accessible or you pass the instance
+    // A safer way is to ensure this callback can get the instance
+    const loginFormInstance = new NeumorphismLoginForm(); // Re-instantiate or get existing
+    loginFormInstance.handleGoogleCredentialResponse(response);
+};
+
+
 // Initialize the form when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new NeumorphismLoginForm();
+    // Only initialize the form once
+    if (!window.loginFormInstance) {
+        window.loginFormInstance = new NeumorphismLoginForm();
+    }
 });
