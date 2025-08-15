@@ -11,7 +11,6 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const cron = require("node-cron");
-
 // --- 1. SERVER SETUP ---
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -38,7 +37,7 @@ if (
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 const User = require("./models/User");
-const Donation = require("./models/Donation");
+const Donation = require("./models/Donations");
 
 // --- 2. DATABASE CONNECTION ---
 mongoose
@@ -64,29 +63,23 @@ function authenticateToken(req, res, next) {
   const token = authHeader && authHeader.split(" ")[1];
 
   if (token == null) {
-    console.warn("Authentication failed: No token provided.");
     return res.status(401).json({ message: "Authentication token is required." });
   }
 
+
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      // Log the specific error to the server console for debugging
-      console.error("❌ JWT Verification Error:", err.message);
-      
-      // Send a more specific error message to the client
-      let message = "Your session is invalid. Please log in again.";
-      if (err.name === 'TokenExpiredError') {
-        message = "Your session has expired. Please log in again.";
+      if (err) {
+        // ⭐ CHANGE: Send a specific error code for expired tokens
+        if (err.name === 'TokenExpiredError') {
+            return res.status(403).json({ error: 'TokenExpiredError', message: 'Your session has expired.' });
+        }
+        return res.status(403).json({ message: "Your session is invalid. Please log in again." });
       }
-      
-      return res.status(403).json({ message });
-    }
-    req.user = user;
-    next();
-  });
+      req.user = user;
+      next();
+});
+
 }
-
-
 // --- 4. API ENDPOINTS ---
 
 app.get("/", (req, res) => {
@@ -204,13 +197,21 @@ app.post("/login", async (req, res) => {
       email: user.email,
       name: user.name,
     };
-    const appToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: "1h" });
+    // ⭐ CHANGE: Issue two tokens and save the refresh token
+    // ⭐ CHANGE: Issue two tokens and save the refresh token
+    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '15m' }); // Short-lived
+    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' }); // Long-lived
+
+    // Save the refresh token to the database
+    user.refreshToken = refreshToken;
+    await user.save();
 
     console.log(`✅ Traditional user logged in successfully: ${user.email}`);
     res.status(200).json({
-      message: "Login successful!",
-      appToken: appToken,
-      user: { id: user._id, name: user.name, email: user.email },
+        message: "Login successful!",
+        accessToken: accessToken,  // Send both tokens
+        refreshToken: refreshToken,
+        user: { id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error("❌ Login error:", error);
@@ -244,7 +245,7 @@ app.post("/api/auth/google-signin", async (req, res) => {
         name: user.name,
       };
       const appToken = jwt.sign(appTokenPayload, JWT_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "8h",
       });
 
       return res.status(200).json({
@@ -276,12 +277,21 @@ app.post("/api/auth/google-signin", async (req, res) => {
           email: user.email,
           name: user.name,
         };
-        const appToken = jwt.sign(appTokenPayload, JWT_SECRET, {
-          expiresIn: "1h",
-        });
-        return res
-          .status(200)
-          .json({ message: "Login successful!", appToken, user });
+        // ⭐ CHANGE: Issue two tokens and save the refresh token
+    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '15m' }); // Short-lived
+    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' }); // Long-lived
+
+    // Save the refresh token to the database
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    console.log(`✅ Traditional user logged in successfully: ${user.email}`);
+    res.status(200).json({
+        message: "Login successful!",
+        accessToken: accessToken,  // Send both tokens
+        refreshToken: refreshToken,
+        user: { id: user._id, name: user.name, email: user.email },
+    });
       }
     }
 
@@ -366,11 +376,16 @@ app.post("/api/auth/complete-google-signup", async (req, res) => {
       email: user.email,
       name: user.name,
     };
-    const appToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: "1h" });
+    // ⭐ CHANGE: Issue two tokens and save the refresh token
+    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    user.refreshToken = refreshToken;
+    await user.save();
 
     res.status(201).json({
-      message: "Registration complete! You are now logged in.",
-      appToken,
+        message: "Registration complete! You are now logged in.",
+        accessToken,
+        refreshToken,
       user: {
         id: user._id,
         name,
@@ -614,6 +629,40 @@ app.get("/api/donations", async (req, res) => {
     }
 });
 
+// ⭐ NEW: Refresh Token Endpoint
+app.post("/api/auth/refresh-token", async (req, res) => {
+    const { token } = req.body;
+    if (!token) return res.sendStatus(401);
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await User.findById(decoded.id);
+
+        if (!user || user.refreshToken !== token) {
+            return res.status(403).json({ message: "Invalid refresh token." });
+        }
+
+        const newAccessToken = jwt.sign({ id: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
+        res.json({ accessToken: newAccessToken });
+
+    } catch (error) {
+        return res.status(403).json({ message: "Invalid refresh token." });
+    }
+});
+
+// ⭐ NEW: Logout Endpoint
+app.post("/api/auth/logout", authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (user) {
+            user.refreshToken = null; // Invalidate the refresh token
+            await user.save();
+        }
+        res.status(200).json({ message: "Logged out successfully." });
+    } catch (error) {
+        res.status(500).json({ message: "Logout failed." });
+    }
+});
 
 // --- 5. START THE SERVER ---
 app.listen(PORT, () => {

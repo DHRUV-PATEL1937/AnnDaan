@@ -1,46 +1,187 @@
-/* --- General Body & Font Styles --- */
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f3f4f6;
-    color: #1f2937;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    padding: 1.5rem;
-    box-sizing: border-box;
+/* --- Global Styles & Variables --- */
+:root {
+    --primary-color: #e74c3c;
+    --primary-dark: #c0392b;
+    --secondary-color: #f39c12;
+    --text-dark: #2c3e50;
+    --text-light: #7f8c8d;
+    --background-light: #ecf0f1;
+    --white: #ffffff;
+    --border-color: #bdc3c7;
 }
 
-/* --- Main Form Container --- */
-.form-container {
-    background-color: #ffffff;
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.6;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* --- Header & Navigation --- */
+.site-header {
+    background-color: var(--white);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.nav-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-dark);
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: var(--primary-color);
+}
+
+/* --- Hero Section --- */
+.hero {
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://placehold.co/1200x600/e74c3c/ecf0f1?text=Help+Feed+Someone') no-repeat center center/cover;
+    color: var(--white);
+    text-align: center;
+    padding: 6rem 0;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.hero-content .subtitle {
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.cta-button {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    display: inline-block;
+}
+
+.cta-button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-3px);
+}
+
+/* --- How It Works Section --- */
+.how-it-works {
+    padding: 4rem 0;
+    background-color: var(--white);
+    text-align: center;
+}
+
+.how-it-works h2 {
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+}
+
+.steps-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+}
+
+@media (min-width: 768px) {
+    .steps-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.step-card {
     padding: 2rem;
     border-radius: 1rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    width: 100%;
-    max-width: 48rem;
-    transition: all 0.3s ease-in-out;
+    background-color: var(--background-light);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* --- Headers --- */
+.step-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.07);
+}
+
+.step-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.step-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.step-card p {
+    color: var(--text-light);
+}
+
+/* --- Donation Form Section --- */
+.donation-section {
+    padding: 4rem 0;
+}
+
+.form-container {
+    background-color: var(--white);
+    padding: 2.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+}
+
 .form-header {
     text-align: center;
     margin-bottom: 2rem;
 }
 
-h1 {
-    font-size: 2.25rem;
-    font-weight: 700;
-    color: #111827;
+.form-header h2 {
+    font-size: 2rem;
 }
 
-p {
-    color: #4b5563;
-    margin-top: 0.5rem;
-}
-
-/* --- Fieldset & Legend --- */
 fieldset {
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
@@ -51,11 +192,9 @@ fieldset {
 legend {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #374151;
     padding: 0 0.5rem;
 }
 
-/* --- Grid Layout for Inputs --- */
 .grid-container {
     display: grid;
     grid-template-columns: 1fr;
@@ -71,41 +210,33 @@ legend {
     }
 }
 
-/* --- Labels & Inputs --- */
 label {
     display: block;
     font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 0.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
 }
 
-input[type="text"],
-input[type="tel"],
-input[type="number"],
-input[type="datetime-local"],
-textarea {
+input[type="text"], input[type="tel"], input[type="number"], input[type="datetime-local"], textarea {
     width: 100%;
     padding: 0.75rem 1rem;
-    border: 1px solid #d1d5db;
+    border: 1px solid var(--border-color);
     border-radius: 0.375rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     font-size: 1rem;
     box-sizing: border-box;
     transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'Poppins', sans-serif;
 }
 
-input:focus,
-textarea:focus {
+input:focus, textarea:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
 }
 
-/* --- Button --- */
-button {
+button[type="submit"] {
     width: 100%;
-    background-color: #4f46e5;
+    background-color: var(--primary-color);
     color: white;
     font-weight: 700;
     padding: 0.875rem 1rem;
@@ -116,14 +247,12 @@ button {
     transition: background-color 0.3s;
 }
 
-button:hover {
-    background-color: #4338ca;
+button[type="submit"]:hover {
+    background-color: var(--primary-dark);
 }
 
 /* --- Loader & Confirmation --- */
-.hidden {
-    display: none;
-}
+.hidden { display: none; }
 
 .loader-container, .confirmation-message {
     text-align: center;
@@ -134,7 +263,7 @@ button:hover {
 .loader {
     border: 4px solid #e5e7eb;
     border-radius: 50%;
-    border-top: 4px solid #4f46e5;
+    border-top: 4px solid var(--primary-color);
     width: 40px;
     height: 40px;
     animation: spin 1s linear infinite;
@@ -143,13 +272,10 @@ button:hover {
 
 .confirmation-message h2 {
     font-size: 1.875rem;
-    font-weight: 700;
-    color: #111827;
     margin-top: 1.5rem;
 }
 
 .confirmation-message .subtitle {
-    color: #4b5563;
     margin-top: 0.5rem;
     margin-bottom: 1.5rem;
 }
@@ -157,7 +283,7 @@ button:hover {
 .success-icon {
     margin: 0 auto;
     background-color: #d1fae5;
-    border-radius: 9999px;
+    border-radius: 50%;
     height: 5rem;
     width: 5rem;
     display: flex;
@@ -171,28 +297,36 @@ button:hover {
     color: #059669;
 }
 
-/* --- AI Summary Box --- */
 .ai-summary {
     text-align: left;
     background-color: #f9fafb;
     padding: 1rem;
     border-radius: 0.5rem;
     border: 1px solid #e5e7eb;
+    margin-top: 2rem;
 }
 
 .ai-summary h3 {
     font-weight: 600;
-    color: #111827;
     margin-bottom: 0.5rem;
 }
 
 .summary-content {
-    color: #374151;
     white-space: pre-wrap;
     font-size: 0.9rem;
     line-height: 1.5;
 }
 
+/* --- Footer --- */
+.site-footer {
+    background-color: var(--text-dark);
+    color: var(--background-light);
+    text-align: center;
+    padding: 2rem 0;
+    margin-top: 4rem;
+}
+
+/* --- Animations --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }

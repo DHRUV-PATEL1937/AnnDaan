@@ -5,81 +5,186 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmationMessage = document.getElementById('confirmationMessage');
     const loaderContainer = document.getElementById('loaderContainer');
     const summaryContent = document.getElementById('summaryContent');
+    
+    // Auth related elements
+    const authLinks = document.getElementById('auth-links');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const userNameSpan = document.getElementById('user-name');
+    const logoutLink = document.getElementById('logout-link');
+    const donorNameInput = document.getElementById('donorName');
+
+    // ⭐ API Wrapper for authenticated requests with auto-refresh logic
+    const api = {
+        async post(endpoint, body) {
+            let accessToken = localStorage.getItem('accessToken');
+            
+            let response = await fetch(`http://localhost:5000${endpoint}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`
+                },
+                body: JSON.stringify(body)
+            });
+
+            const data = await response.json();
+
+            // Check if the token expired
+            if (response.status === 403 && data.error === 'TokenExpiredError') {
+                console.log("Access token expired. Attempting to refresh...");
+                const refreshed = await this.refreshToken();
+                if (refreshed) {
+                    accessToken = localStorage.getItem('accessToken');
+                    // Retry the original request with the new token
+                    console.log("Retrying original request with new token...");
+                    response = await fetch(`http://localhost:5000${endpoint}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`
+                        },
+                        body: JSON.stringify(body)
+                    });
+                    return { response, data: await response.json() };
+                } else {
+                    // Refresh failed, force logout
+                    handleLogout();
+                    throw new Error("Your session has expired. Please log in again.");
+                }
+            }
+            return { response, data };
+        },
+
+        async refreshToken() {
+            const refreshToken = localStorage.getItem('refreshToken');
+            if (!refreshToken) return false;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/refresh-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: refreshToken })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('accessToken', data.accessToken);
+                    console.log("Token refreshed successfully.");
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error("Error refreshing token:", error);
+                return false;
+            }
+        }
+    };
+
+    // --- Auth UI Management ---
+    function checkLoginStatus() {
+        const token = localStorage.getItem('accessToken');
+        if (token) {
+            authLinks.style.display = 'none';
+            welcomeMessage.style.display = 'block';
+            const userName = localStorage.getItem('userName');
+            if (userName) {
+                userNameSpan.textContent = userName;
+                donorNameInput.value = userName;
+            }
+        } else {
+            authLinks.style.display = 'block';
+            welcomeMessage.style.display = 'none';
+        }
+    }
+
+    async function handleLogout() {
+        // Invalidate the refresh token on the server
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (refreshToken) {
+            try {
+                await api.post('/api/auth/logout', {});
+            } catch (error) {
+                console.error("Logout failed on server, clearing client-side session anyway.");
+            }
+        }
+        
+        // Clear local storage regardless
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('userName');
+        alert("You have been logged out.");
+        window.location.href = 'login.html';
+    }
+
+    logoutLink.addEventListener('click', function(event) {
+        event.preventDefault();
+        handleLogout();
+    });
+
+    checkLoginStatus();
 
     // --- Form Submission Logic ---
     form.addEventListener('submit', async function(event) {
-        // Prevent the default browser action of reloading the page
         event.preventDefault();
 
-        // Hide the form and show the loading spinner
+        if (!localStorage.getItem('accessToken')) {
+            alert("You must be logged in to make a donation. Redirecting to login page.");
+            window.location.href = 'login.html';
+            return;
+        }
+
         form.classList.add('hidden');
         formHeader.classList.add('hidden');
         loaderContainer.classList.remove('hidden');
 
-        // Collect form data into a structured object
         const formData = new FormData(form);
         const donationDetails = Object.fromEntries(formData.entries());
 
-        // --- Expiry Time Calculation ---
-        // Calculate the exact expiry date and time based on user input
-        const cookedTime = new Date(donationDetails.cookedTime);
-        const shelfLifeHours = parseInt(donationDetails.shelfLife, 10);
-        const expiryDateTime = new Date(cookedTime.getTime() + shelfLifeHours * 60 * 60 * 1000);
-        
-        // Add the calculated expiry time to our data object
-        donationDetails.expiryDateTime = expiryDateTime.toISOString();
-
-        console.log('Donation Details for Server:', donationDetails);
-
         try {
-            // Generate a user-friendly summary using the Gemini API
+            // Use the API wrapper to submit the donation
+            const { response, data } = await api.post('/api/donations', {
+                donorName: donationDetails.donorName,
+                contactNumber: donationDetails.contactNumber,
+                address: donationDetails.address,
+                foodType: donationDetails.foodType,
+                quantity: donationDetails.quantity,
+                notes: donationDetails.notes,
+                pickupTime: donationDetails.pickupTime,
+                cookedTime: donationDetails.cookedTime,
+                shelfLifeHours: donationDetails.shelfLife,
+            });
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to submit donation.');
+            }
+            
+            console.log('Successfully saved to DB:', data);
+
+            // Now that it's saved, generate the AI summary
+            const cookedTime = new Date(donationDetails.cookedTime);
+            const shelfLifeHours = parseInt(donationDetails.shelfLife, 10);
+            const expiryDateTime = new Date(cookedTime.getTime() + shelfLifeHours * 60 * 60 * 1000);
+            donationDetails.expiryDateTime = expiryDateTime.toISOString();
+            
             const summary = await generateDonationSummary(donationDetails);
             summaryContent.textContent = summary;
-
-            // --- SERVER INTEGRATION POINT ---
-            // This is where you would send the complete 'donationDetails' object
-            // to your server's database.
-            // The server should store all details, including 'expiryDateTime'.
-            // A separate process on your server (e.g., a cron job) should periodically
-            // check for listings where 'expiryDateTime' is in the past and delete them.
-            /*
-            fetch('https://api.yourserver.com/donations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...donationDetails, aiSummary: summary }),
-            })
-            .then(response => response.json())
-            .then(data => console.log('Successfully saved to DB:', data))
-            .catch(error => console.error('Error saving to DB:', error));
-            */
-
-            // Show the final confirmation message
+            
             showConfirmation();
 
         } catch (error) {
             console.error("Error during submission process:", error);
-            // If something fails, show the form again with an error message
             form.classList.remove('hidden');
             formHeader.classList.remove('hidden');
-            alert("An error occurred. Please try submitting again.");
+            alert(`An error occurred: ${error.message}.`);
         } finally {
-            // Always hide the loader when the process is finished
             loaderContainer.classList.add('hidden');
         }
     });
 
-    /**
-     * Shows the confirmation message section.
-     */
     function showConfirmation() {
         confirmationMessage.classList.remove('hidden');
     }
 
-    /**
-     * Generates a donation summary by calling the Gemini API.
-     * @param {object} details - The donation details from the form.
-     * @returns {Promise<string>} A promise that resolves to the summary text.
-     */
     async function generateDonationSummary(details) {
         const prompt = `
             Create a short, friendly summary for a food donation confirmation page.
@@ -93,14 +198,13 @@ document.addEventListener('DOMContentLoaded', function() {
             - Calculated Expiry Time: "${new Date(details.expiryDateTime).toLocaleString()}"
         `;
 
-        const apiKey = ""; // API key is injected by the environment
+        const apiKey = "";
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
         const payload = {
             contents: [{ role: "user", parts: [{ text: prompt }] }]
         };
 
-        // Retry logic with exponential backoff for API call robustness
         let response;
         let delay = 1000;
         for (let i = 0; i < 5; i++) {
@@ -124,14 +228,13 @@ document.addEventListener('DOMContentLoaded', function() {
             delay *= 2;
         }
 
-        throw new Error("Failed to get a response from the Gemini API after multiple retries.");
+        console.error("Failed to get a response from the Gemini API after multiple retries.");
+        return "Your donation details have been recorded. Thank you for your generosity!";
     }
     
-    // --- Helper to prevent selecting past dates in datetime inputs ---
     const dateTimeInputs = document.querySelectorAll('input[type="datetime-local"]');
     dateTimeInputs.forEach(input => {
         const now = new Date();
-        // Adjust for timezone offset to get local time in ISO format
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         input.min = now.toISOString().slice(0, 16);
     });

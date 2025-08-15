@@ -201,7 +201,10 @@ class NeumorphismLoginForm {
 
             if (response.ok) {
                 // ⭐ FIX: Use the correct key 'appToken'
-                localStorage.setItem('appToken', data.appToken);
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('userName', data.user.name); // Store name for welcome message
+
                 this.showNeumorphicSuccess();
             } else {
                 this.showServerError(data.message || 'Login failed.');
@@ -233,7 +236,10 @@ class NeumorphismLoginForm {
                 this.showUsernameModal();
             } else if (res.ok) {
                 // ⭐ FIX: Use the correct key 'appToken'
-                localStorage.setItem('appToken', data.appToken);
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('userName', data.user.name); // Store name for welcome message
+
                 this.showNeumorphicSuccess();
             } else {
                 this.showServerError(data.message || 'Google Sign-In failed.');
@@ -292,7 +298,10 @@ class NeumorphismLoginForm {
 
             if (response.ok) {
                 // ⭐ FIX: Use the correct key 'appToken'
-                localStorage.setItem('appToken', data.appToken);
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('userName', data.user.name); // Store name for welcome message
+
                 this.usernameModal.style.display = 'none';
                 this.usernameModal.classList.remove('visible');
                 this.showNeumorphicSuccess();

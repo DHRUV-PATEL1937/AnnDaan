@@ -4,15 +4,14 @@ const userSchema = new mongoose.Schema({
     // For traditional logins
     username: {
         type: String,
-        unique: true, // Ensures every username is unique
-        sparse: true, // Allows multiple documents to have a null username (for Google users)
+        unique: true,
+        sparse: true, 
         trim: true,
         minlength: 3,
     },
-    // Hashed password for traditional logins
     password: {
         type: String,
-        sparse: true, // Allows null for Google-only users
+        sparse: true,
     },
 
     // For Google Sign-Ins
@@ -34,6 +33,11 @@ const userSchema = new mongoose.Schema({
         required: true,
         lowercase: true,
         trim: true,
+    },
+    
+    // ⭐ NEW: Field to store the long-lived refresh token
+    refreshToken: {
+        type: String,
     },
 
     // Optional additional user details

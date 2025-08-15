@@ -3,106 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donate Leftover Food</title>
+    <title>AnnDan - Share the Joy of Food</title>
     <link rel="stylesheet" href="food_donation_form.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="formContainer" class="form-container">
-        <!-- Form Header -->
-        <div id="formHeader" class="form-header">
-            <h1>Share Your Leftover Food 🍽️</h1>
-            <p>Fill out the details below to help someone in need.</p>
+    <!-- Header & Navigation -->
+    <header class="site-header">
+        <div class="container">
+            <nav class="main-nav">
+                <a href="#" class="logo">AnnDan</a>
+                <ul class="nav-links">
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#donate-form">Donate Now</a></li>
+                    <!-- ⭐ UPDATED: Login/Logout Links -->
+                    <li id="auth-links">
+                        <a href="login.html" class="login-link">Login</a>
+                    </li>
+                    <li id="welcome-message" style="display: none;">
+                        Welcome, <span id="user-name"></span>! (<a href="#" id="logout-link">Logout</a>)
+                    </li>
+                </ul>
+            </nav>
         </div>
-        
-        <!-- Donation Form -->
-        <form id="foodDonationForm">
-            
-            <!-- Donor Information Section -->
-            <fieldset>
-                <legend>Your Information</legend>
-                <div class="grid-container">
-                    <div>
-                        <label for="donorName">Name</label>
-                        <input type="text" id="donorName" name="donorName" placeholder="e.g., Jane Doe" required>
-                    </div>
-                    <div>
-                        <label for="contactNumber">Contact Number</label>
-                        <input type="tel" id="contactNumber" name="contactNumber" placeholder="e.g., 9876543210" required>
-                    </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1>Turn Your Leftovers into a Lifeline.</h1>
+                    <p class="subtitle">Join our community in fighting food waste and hunger. Your extra food can be a meal for someone in need. It's simple, fast, and makes a real difference.</p>
+                    <a href="#donate-form" class="cta-button">Donate Food Now</a>
                 </div>
-            </fieldset>
-
-            <!-- Pickup Address Section -->
-            <fieldset>
-                <legend>Pickup Details</legend>
-                 <div class="grid-container">
-                    <div>
-                        <label for="address">Full Address</label>
-                        <textarea id="address" name="address" rows="4" placeholder="Street, Area, City, Pincode" required></textarea>
-                    </div>
-                    <div>
-                        <label for="pickupTime">Preferred Pickup Time</label>
-                        <input type="datetime-local" id="pickupTime" name="pickupTime" required>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Food Details Section -->
-            <fieldset>
-                <legend>Food Details</legend>
-                <div class="grid-container">
-                    <div>
-                        <label for="foodType">Type of Food</label>
-                        <input type="text" id="foodType" name="foodType" placeholder="e.g., Cooked Rice, Dal, Vegetables" required>
-                    </div>
-                    <div>
-                        <label for="quantity">Quantity (serves # people)</label>
-                        <input type="number" id="quantity" name="quantity" min="1" placeholder="e.g., 5" required>
-                    </div>
-                     <div>
-                        <label for="cookedTime">When was it prepared?</label>
-                        <input type="datetime-local" id="cookedTime" name="cookedTime" required>
-                    </div>
-                    <div>
-                        <label for="shelfLife">Shelf Life (in hours)</label>
-                        <input type="number" id="shelfLife" name="shelfLife" min="1" placeholder="e.g., 12" required>
-                    </div>
-                    <div class="full-width">
-                        <label for="notes">Special Instructions</label>
-                        <textarea id="notes" name="notes" rows="3" placeholder="e.g., Contains nuts, spicy, etc."></textarea>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Submit Button -->
-            <button type="submit">List My Food Donation</button>
-        </form>
-
-        <!-- Loading Indicator -->
-        <div id="loaderContainer" class="hidden loader-container">
-             <div class="loader"></div>
-             <p>Generating your donation summary...</p>
-        </div>
-
-        <!-- Confirmation Message (Initially Hidden) -->
-        <div id="confirmationMessage" class="hidden confirmation-message">
-            <div class="success-icon">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
             </div>
-            <h2>Thank You! 🙏</h2>
-            <p class="subtitle">Your donation has been listed successfully. A volunteer will contact you shortly.</p>
-            
-            <!-- AI Generated Summary -->
-            <div id="aiSummary" class="ai-summary">
-                <h3>Your Donation Summary:</h3>
-                <div id="summaryContent" class="summary-content"></div>
-            </div>
-        </div>
-    </div>
+        </section>
 
-    <script src="script.js"></script>
+        <!-- How It Works Section -->
+        <section id="how-it-works" class="how-it-works">
+            <div class="container">
+                <h2>How It Works in 3 Easy Steps</h2>
+                <div class="steps-container">
+                    <div class="step-card">
+                        <div class="step-icon">📝</div>
+                        <h3>1. Fill the Form</h3>
+                        <p>Provide details about the food, your location, and a convenient pickup time.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-icon">🛵</div>
+                        <h3>2. We Collect</h3>
+                        <p>A volunteer will be assigned to pick up the donation right from your doorstep.</p>
+                    </div>
+                    <div class="step-card">
+                        <div class="step-icon">❤️</div>
+                        <h3>3. We Distribute</h3>
+                        <p>Your food is delivered to local shelters and communities, reaching those who need it most.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Donation Form Section -->
+        <section id="donate-form" class="donation-section">
+            <div id="formContainer" class="form-container">
+                <div id="formHeader" class="form-header">
+                    <h2>Share Your Leftover Food 🍽️</h2>
+                    <p>Fill out the details below to help someone in need.</p>
+                </div>
+                
+                <form id="foodDonationForm">
+                    <fieldset>
+                        <legend>Your Information</legend>
+                        <div class="grid-container">
+                            <div>
+                                <label for="donorName">Name</label>
+                                <input type="text" id="donorName" name="donorName" placeholder="e.g., Jane Doe" required>
+                            </div>
+                            <div>
+                                <label for="contactNumber">Contact Number</label>
+                                <input type="tel" id="contactNumber" name="contactNumber" placeholder="e.g., 9876543210" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Pickup Details</legend>
+                        <div class="grid-container">
+                            <div>
+                                <label for="address">Full Address</label>
+                                <textarea id="address" name="address" rows="4" placeholder="Street, Area, City, Pincode" required></textarea>
+                            </div>
+                            <div>
+                                <label for="pickupTime">Preferred Pickup Time</label>
+                                <input type="datetime-local" id="pickupTime" name="pickupTime" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset>
+                        <legend>Food Details</legend>
+                        <div class="grid-container">
+                            <div>
+                                <label for="foodType">Type of Food</label>
+                                <input type="text" id="foodType" name="foodType" placeholder="e.g., Cooked Rice, Dal, Vegetables" required>
+                            </div>
+                            <div>
+                                <label for="quantity">Quantity (serves # people)</label>
+                                <input type="number" id="quantity" name="quantity" min="1" placeholder="e.g., 5" required>
+                            </div>
+                            <div>
+                                <label for="cookedTime">When was it prepared?</label>
+                                <input type="datetime-local" id="cookedTime" name="cookedTime" required>
+                            </div>
+                            <div>
+                                <label for="shelfLife">Shelf Life (in hours)</label>
+                                <input type="number" id="shelfLife" name="shelfLife" min="1" placeholder="e.g., 12" required>
+                            </div>
+                            <div class="full-width">
+                                <label for="notes">Special Instructions</label>
+                                <textarea id="notes" name="notes" rows="3" placeholder="e.g., Contains nuts, spicy, etc."></textarea>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <button type="submit">List My Food Donation</button>
+                </form>
+
+                <div id="loaderContainer" class="hidden loader-container">
+                     <div class="loader"></div>
+                     <p>Generating your donation summary...</p>
+                </div>
+
+                <div id="confirmationMessage" class="hidden confirmation-message">
+                    <div class="success-icon">
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2>Thank You! 🙏</h2>
+                    <p class="subtitle">Your donation has been listed successfully. A volunteer will contact you shortly.</p>
+                    
+                    <div id="aiSummary" class="ai-summary">
+                        <h3>Your Donation Summary:</h3>
+                        <div id="summaryContent" class="summary-content"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 AnnDan. All Rights Reserved. Let's make the world a better place, one meal at a time.</p>
+        </div>
+    </footer>
+
+    <script src="food_donation_form.js"></script>
 </body>
 </html>
