@@ -200,7 +200,8 @@ class NeumorphismLoginForm {
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('jwtToken', data.appToken);
+                // ⭐ FIX: Use the correct key 'appToken'
+                localStorage.setItem('appToken', data.appToken);
                 this.showNeumorphicSuccess();
             } else {
                 this.showServerError(data.message || 'Login failed.');
@@ -231,7 +232,8 @@ class NeumorphismLoginForm {
                 this.tempToken = data.tempToken;
                 this.showUsernameModal();
             } else if (res.ok) {
-                localStorage.setItem('jwtToken', data.appToken);
+                // ⭐ FIX: Use the correct key 'appToken'
+                localStorage.setItem('appToken', data.appToken);
                 this.showNeumorphicSuccess();
             } else {
                 this.showServerError(data.message || 'Google Sign-In failed.');
@@ -289,7 +291,8 @@ class NeumorphismLoginForm {
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem('jwtToken', data.appToken);
+                // ⭐ FIX: Use the correct key 'appToken'
+                localStorage.setItem('appToken', data.appToken);
                 this.usernameModal.style.display = 'none';
                 this.usernameModal.classList.remove('visible');
                 this.showNeumorphicSuccess();
@@ -331,7 +334,8 @@ class NeumorphismLoginForm {
         
         setTimeout(() => {
             console.log('Redirecting to dashboard...');
-            window.location.href = '/dashboard.html';
+            // ⭐ FIX: Use a relative path for redirection
+            window.location.href = './dashboard.html';
         }, 2500);
     }
 }

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate Leftover Food</title>
+    <link rel="stylesheet" href="food_donation_form.css">
+</head>
+<body>
+
+    <div id="formContainer" class="form-container">
+        <!-- Form Header -->
+        <div id="formHeader" class="form-header">
+            <h1>Share Your Leftover Food 🍽️</h1>
+            <p>Fill out the details below to help someone in need.</p>
+        </div>
+        
+        <!-- Donation Form -->
+        <form id="foodDonationForm">
+            
+            <!-- Donor Information Section -->
+            <fieldset>
+                <legend>Your Information</legend>
+                <div class="grid-container">
+                    <div>
+                        <label for="donorName">Name</label>
+                        <input type="text" id="donorName" name="donorName" placeholder="e.g., Jane Doe" required>
+                    </div>
+                    <div>
+                        <label for="contactNumber">Contact Number</label>
+                        <input type="tel" id="contactNumber" name="contactNumber" placeholder="e.g., 9876543210" required>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Pickup Address Section -->
+            <fieldset>
+                <legend>Pickup Details</legend>
+                 <div class="grid-container">
+                    <div>
+                        <label for="address">Full Address</label>
+                        <textarea id="address" name="address" rows="4" placeholder="Street, Area, City, Pincode" required></textarea>
+                    </div>
+                    <div>
+                        <label for="pickupTime">Preferred Pickup Time</label>
+                        <input type="datetime-local" id="pickupTime" name="pickupTime" required>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Food Details Section -->
+            <fieldset>
+                <legend>Food Details</legend>
+                <div class="grid-container">
+                    <div>
+                        <label for="foodType">Type of Food</label>
+                        <input type="text" id="foodType" name="foodType" placeholder="e.g., Cooked Rice, Dal, Vegetables" required>
+                    </div>
+                    <div>
+                        <label for="quantity">Quantity (serves # people)</label>
+                        <input type="number" id="quantity" name="quantity" min="1" placeholder="e.g., 5" required>
+                    </div>
+                     <div>
+                        <label for="cookedTime">When was it prepared?</label>
+                        <input type="datetime-local" id="cookedTime" name="cookedTime" required>
+                    </div>
+                    <div>
+                        <label for="shelfLife">Shelf Life (in hours)</label>
+                        <input type="number" id="shelfLife" name="shelfLife" min="1" placeholder="e.g., 12" required>
+                    </div>
+                    <div class="full-width">
+                        <label for="notes">Special Instructions</label>
+                        <textarea id="notes" name="notes" rows="3" placeholder="e.g., Contains nuts, spicy, etc."></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Submit Button -->
+            <button type="submit">List My Food Donation</button>
+        </form>
+
+        <!-- Loading Indicator -->
+        <div id="loaderContainer" class="hidden loader-container">
+             <div class="loader"></div>
+             <p>Generating your donation summary...</p>
+        </div>
+
+        <!-- Confirmation Message (Initially Hidden) -->
+        <div id="confirmationMessage" class="hidden confirmation-message">
+            <div class="success-icon">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h2>Thank You! 🙏</h2>
+            <p class="subtitle">Your donation has been listed successfully. A volunteer will contact you shortly.</p>
+            
+            <!-- AI Generated Summary -->
+            <div id="aiSummary" class="ai-summary">
+                <h3>Your Donation Summary:</h3>
+                <div id="summaryContent" class="summary-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
