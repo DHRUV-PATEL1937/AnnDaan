@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FoodLink — Food Redistribution Platform</title>
+<meta name="description" content="FoodLink connects Donators, Riders, and NGOs to redistribute surplus food safely and fast." />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* =========================================================
+   FOODLINK — ULTRA POLISHED LANDING (HTML + CSS ONLY)
+   Style: modern clinic/NGO vibe (light, calm greens), soft
+   rounded shapes, subtle glass, micro-interactions, no JS.
+   Sections: Hero, About, How, Services, Reviews, Partners,
+   Impact Stats, Modules, FAQ, CTA, Footer.
+   ========================================================= */
+
+/* ---------- Root + Reset ---------- */
+:root{
+  --bg:#f4f6f2;
+  --surface:#ffffff;
+  --surface-2:#f0f3ee;
+  --text:#1b2b22;
+  --muted:#5d6b61;
+  --brand:#2e7d64;        /* deep sage */
+  --brand-2:#7cc4a1;      /* mint */
+  --accent:#355e52;
+  --accent-2:#e6f6ee;
+  --ring: 0 0 0 3px rgba(46,125,100,.20), 0 0 0 8px rgba(124,196,161,.18);
+  --shadow-1: 0 8px 24px rgba(21,41,32,.08);
+  --shadow-2: 0 18px 44px rgba(21,41,32,.12);
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+  --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
+  --pill: linear-gradient(180deg,#ffffff,#eef3ef);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  line-height:1.5;
+}
+
+/* ---------- Utilities ---------- */
+.container{max-width:1200px;margin:0 auto;padding:0 24px}
+.container-wide{max-width:1280px;margin:0 auto;padding:0 24px}
+.grid{display:grid;gap:24px}
+.center{text-align:center}
+.btn{
+  --pad:14px 22px;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  padding:var(--pad);
+  border-radius:999px;border:0;cursor:pointer;text-decoration:none;
+  color:#fff;background:var(--grad);font-weight:700;
+  box-shadow:var(--shadow-2);
+  transition:transform .18s ease, box-shadow .25s ease, filter .25s ease;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{
+  color:var(--brand);background:transparent;border:1.5px solid rgba(46,125,100,.25);box-shadow:none
+}
+.kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; background:#ecf3ef; border:1px solid #d9e6de; padding:2px 6px;border-radius:6px}
+
+/* ---------- Decorative Dots / Shapes ---------- */
+.shape{
+  position:absolute;border-radius:50%;filter:blur(30px);opacity:.25;pointer-events:none
+}
+.shape.a{width:240px;height:240px;background:#bfe7d1;left:-60px;top:-60px}
+.shape.b{width:300px;height:300px;background:#dcefe6;right:-40px;top:-80px}
+
+/* ---------- Navbar ---------- */
+.navbar{
+  position:sticky;top:0;z-index:10;background:rgba(255,255,255,.82);
+  backdrop-filter:saturate(1.2) blur(12px);
+  border-bottom:1px solid #e6eee9;
+}
+.navbar .wrap{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0;
+}
+.brand{
+  display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--text)
+}
+.brand .logo{
+  width:44px;height:44px;border-radius:14px;background:var(--grad);
+  display:grid;place-items:center;color:#fff;font-weight:800;box-shadow:var(--shadow-1)
+}
+.brand b{font-family:Poppins,sans-serif;font-size:20px;letter-spacing:.2px}
+.nav{
+  display:flex;align-items:center;gap:24px;flex-wrap:wrap
+}
+.nav a{
+  color:var(--muted);text-decoration:none;font-weight:600;padding:8px 2px;position:relative
+}
+.nav a:after{
+  content:"";position:absolute;left:0;right:100%;bottom:0;height:2px;background:var(--grad);
+  border-radius:2px;transition:right .25s ease
+}
+.nav a:hover{color:var(--text)} .nav a:hover:after{right:0}
+.actions{display:flex;align-items:center;gap:10px}
+
+/* ---------- Sign-in Dropdown (CSS-only) ---------- */
+.dropdown{position:relative}
+.dropdown > .btn{--pad:10px 16px}
+.dropdown-panel{
+  position:absolute;right:0;top:calc(100% + 10px);min-width:220px;background:#ffffff;
+  border:1px solid #e6eee9;border-radius:14px;padding:10px;box-shadow:var(--shadow-2);
+  transform:translateY(-8px) scale(.98);opacity:0;visibility:hidden;transition:.18s ease;transform-origin:top right;
+}
+.dropdown:focus-within .dropdown-panel,
+.dropdown:hover:has(button:focus-visible){
+  transform:translateY(0) scale(1);opacity:1;visibility:visible;
+}
+.dropdown-panel a{
+  display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text);
+  padding:10px 12px;border-radius:10px;transition:background .2s ease, transform .15s ease;font-weight:600
+}
+.dropdown-panel a:hover{background:var(--accent-2);transform:translateY(-1px)}
+.badge{
+  margin-left:auto;border-radius:999px;background:var(--grad);color:#fff;font-size:12px;padding:4px 8px
+}
+
+/* ---------- Hero ---------- */
+.hero{
+  position:relative;overflow:hidden;background:linear-gradient(180deg,#f7faf7, #f0f4f1);
+  padding:72px 0 64px;border-bottom:1px solid #e6eee9;
+}
+.hero-grid{
+  display:grid;grid-template-columns:1.1fr .9fr;gap:28px;align-items:center
+}
+.kicker{font-weight:700;color:var(--brand);letter-spacing:.3px;margin-bottom:12px}
+.hero h1{
+  font-family:Poppins,sans-serif;font-size:56px;line-height:1.05;margin:0 0 10px;letter-spacing:.2px
+}
+.hero p{color:var(--muted);font-size:18px;margin:0 0 20px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero .metrics{
+  display:grid;gap:12px;margin-top:12px
+}
+.metric{
+  background:var(--pill);border:1px solid #e6eee9;border-radius:999px;padding:12px 18px;display:flex;align-items:center;gap:10px;width:max-content;
+  box-shadow:var(--shadow-1)
+}
+.metric b{font-family:Poppins,sans-serif;font-size:20px}
+
+/* Hero portrait frame (rounded oval) */
+.portrait{
+  position:relative;aspect-ratio:1/1;border-radius:50%;
+  background:var(--surface);border:10px solid #e7eee9;overflow:hidden;box-shadow:var(--shadow-2)
+}
+.portrait .ph{
+  position:absolute;inset:0;background:
+  url('https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=1400&auto=format&fit=crop') center/cover no-repeat;
+  transform:scale(1.02);transition:transform .6s ease;
+}
+.portrait:hover .ph{transform:scale(1.06)}
+
+/* ---------- Partners strip ---------- */
+.partners-strip{
+  border-top:1px solid #e6eee9;border-bottom:1px solid #e6eee9;background:#fff
+}
+.marquee{
+  overflow:hidden;mask-image:linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent)
+}
+.marquee ul{
+  display:flex;gap:32px;list-style:none;margin:0;padding:16px 0;animation:slide 24s linear infinite
+}
+.marquee li{
+  background:var(--pill);border:1px solid #e6eee9;padding:10px 18px;border-radius:999px;color:var(--muted);
+  font-weight:600
+}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* ---------- Section base ---------- */
+section{position:relative;padding:88px 0}
+.section-title{
+  font-family:Poppins,sans-serif;font-size:40px;line-height:1.15;margin:0 0 8px
+}
+.section-sub{color:var(--muted);max-width:800px}
+
+/* ---------- About ---------- */
+.about .cols{
+  display:grid;grid-template-columns:1.1fr .9fr;gap:28px;margin-top:26px
+}
+.oval-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.oval{
+  aspect-ratio:9/16;border-radius:999px;overflow:hidden;border:8px solid #ecf3ef;background:#dfeee7;box-shadow:var(--shadow-1)
+}
+.oval:nth-child(1){background:url('https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?q=80&w=900&auto=format&fit=crop') center/cover}
+.oval:nth-child(2){background:url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=900&auto=format&fit=crop') center/cover}
+.oval:nth-child(3){background:url('https://images.unsplash.com/photo-1526318472351-c75fcf070305?q=80&w=900&auto=format&fit=crop') center/cover}
+.pill-cards{
+  display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px
+}
+.pill{
+  background:var(--pill);border:1px solid #e6eee9;border-radius:16px;padding:16px;box-shadow:var(--shadow-1)
+}
+.pill h4{margin:0 0 6px}
+
+/* ---------- How it works ---------- */
+.how{
+  background:linear-gradient(180deg,#f5f7f4,#eef3ef);
+  border-top:1px solid #e6eee9;border-bottom:1px solid #e6eee9
+}
+.steps{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:22px
+}
+.step{
+  background:#fff;border:1px solid #e6eee9;border-radius:20px;padding:18px;box-shadow:var(--shadow-1);position:relative
+}
+.step .num{
+  position:absolute;top:-14px;left:18px;background:var(--grad);color:#fff;width:36px;height:36px;border-radius:12px;
+  display:grid;place-items:center;font-weight:800;box-shadow:var(--shadow-2)
+}
+.step h4{margin:16px 0 8px;font-family:Poppins}
+
+/* ---------- Services ---------- */
+.services .grid-3{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:26px
+}
+.service{
+  border-radius:28px;background:#fff;border:1px solid #e6eee9;box-shadow:var(--shadow-1);
+  padding:24px; text-align:center; transition:transform .18s ease, box-shadow .25s ease
+}
+.service:hover{transform:translateY(-6px); box-shadow:var(--shadow-2)}
+.service .ico{
+  width:74px;height:74px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:28px;margin:-56px auto 12px;box-shadow:var(--shadow-2)
+}
+.service p{color:var(--muted)}
+.service .btn{--pad:10px 16px;margin-top:10px}
+
+/* ---------- Reviews (cards + scroll snap) ---------- */
+.reviews{
+  background:#ffffff;border-top:1px solid #e6eee9;border-bottom:1px solid #e6eee9
+}
+.rail{display:flex;gap:18px;overflow:auto;padding-bottom:6px;scroll-snap-type:x mandatory;margin-top:18px}
+.review{
+  scroll-snap-align:start;flex:0 0 360px;background:var(--pill);border:1px solid #e6eee9;border-radius:20px;padding:18px;box-shadow:var(--shadow-1)
+}
+.review .head{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(180deg,#e7f4ee,#c5e7d8);box-shadow:var(--shadow-1)}
+.stars:before{content:"★★★★★";letter-spacing:2px;background:linear-gradient(90deg,#ffc66d,#7cc4a1);-webkit-background-clip:text;color:transparent;font-size:14px}
+
+/* ---------- Partners ---------- */
+.partners .logos{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:22px
+}
+.partner{
+  background:#fff;border:1px solid #e6eee9;border-radius:14px;padding:16px;text-align:center;color:var(--muted);font-weight:700;
+  box-shadow:var(--shadow-1);transition:transform .15s ease
+}
+.partner:hover{transform:translateY(-3px)}
+
+/* ---------- Impact Stats ---------- */
+.stats .grid-4{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:24px
+}
+.stat{
+  background:#fff;border:1px solid #e6eee9;border-radius:22px;padding:22px;text-align:center;box-shadow:var(--shadow-1)
+}
+.stat h3{font-size:44px;line-height:1;margin:0 0 6px;font-family:Poppins}
+.stat p{color:var(--muted);margin:0}
+
+/* ---------- Modules (Donor/NGO/Rider/Reporter) ---------- */
+.modules{
+  background:linear-gradient(180deg,#f4f7f4,#ecf3ef);border-top:1px solid #e6eee9;border-bottom:1px solid #e6eee9
+}
+.mod-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:22px}
+.mod{
+  background:#fff;border:1px solid #e6eee9;border-radius:18px;padding:18px;box-shadow:var(--shadow-1)
+}
+.mod h4{margin:0 0 8px}
+.mod ul{padding-left:18px;margin:0;color:var(--muted)}
+
+/* ---------- API Showcase ---------- */
+.api .cols{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;margin-top:24px}
+.code{
+  background:#0b1720;color:#c6e7d6;border-radius:18px;padding:18px;border:1px solid #0f2030;box-shadow:0 12px 24px rgba(7,18,26,.35);
+  font: 600 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+.code .comment{color:#7aa894}
+
+/* ---------- FAQ ---------- */
+.faq .qa{max-width:900px;margin:22px auto 0;display:grid;gap:12px}
+details{
+  border:1px solid #e6eee9;border-radius:14px;background:#fff;padding:12px 16px;box-shadow:var(--shadow-1)
+}
+summary{list-style:none;cursor:pointer;font-weight:700;display:flex;align-items:center;gap:10px}
+summary::-webkit-details-marker{display:none}
+summary:before{
+  content:"+";width:26px;height:26px;border-radius:8px;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800
+}
+details[open] summary:before{content:"–"}
+details p{color:var(--muted);margin:10px 0 0}
+
+/* ---------- CTA ---------- */
+.cta{
+  background:#ffffff;border-top:1px solid #e6eee9;border-bottom:1px solid #e6eee9
+}
+.cta .panel{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--pill);border:1px solid #e6eee9;border-radius:24px;
+  padding:24px;box-shadow:var(--shadow-1)
+}
+
+/* ---------- Footer ---------- */
+footer{padding:64px 0;background:#f7faf7;border-top:1px solid #e6eee9}
+.footer-grid{display:grid;grid-template-columns:1.2fr .8fr .8fr .8fr;gap:24px}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--text)}
+.copy{margin-top:18px;color:#7b8a81}
+
+/* ---------- Focus & Media ---------- */
+:focus-visible{outline:none;box-shadow:var(--ring)}
+@media (max-width:1100px){
+  .hero-grid,.about .cols,.api .cols{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .steps{grid-template-columns:repeat(2,1fr)}
+  .services .grid-3{grid-template-columns:1fr 1fr}
+  .stats .grid-4{grid-template-columns:1fr 1fr}
+  .partners .logos{grid-template-columns:repeat(3,1fr)}
+  .mod-grid{grid-template-columns:repeat(2,1fr)}
+  .footer-grid{grid-template-columns:1fr 1fr}
+}
+@media (max-width:620px){
+  .nav{display:none}
+  .services .grid-3,.stats .grid-4,.partners .logos{grid-template-columns:1fr}
+  .mod-grid{grid-template-columns:1fr}
+  .hero h1{font-size:42px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================== NAVBAR ============================== -->
+<header class="navbar">
+  <div class="container wrap">
+    <a class="brand" href="#">
+      <div class="logo">FL</div>
+      <b>FoodLink</b>
+    </a>
+
+    <nav class="nav" aria-label="Primary">
+      <a href="#about">About</a>
+      <a href="#how">How it works</a>
+      <a href="#services">Services</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#impact">Impact</a>
+    </nav>
+
+    <div class="actions">
+      <a class="btn ghost" href="#api">API</a>
+
+      <!-- CSS-only dropdown -->
+      <div class="dropdown">
+        <button class="btn" aria-haspopup="true" aria-expanded="false">Sign in</button>
+        <div class="dropdown-panel" role="menu" aria-label="Sign in options">
+          <a href="#" role="menuitem">Donator <span class="badge">Give Food</span></a>
+          <a href="#" role="menuitem">Rider <span class="badge">Pick & Deliver</span></a>
+          <a href="#" role="menuitem">NGO <span class="badge">Coordinate</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== HERO ============================== -->
+<section class="hero" id="home" aria-label="Hero">
+  <div class="shape a"></div><div class="shape b"></div>
+  <div class="container hero-grid">
+    <div>
+      <div class="kicker">WELCOME TO FOODLINK</div>
+      <h1>Destination for Relief &amp; Wellness — Through Food</h1>
+      <p>
+        Leftover meals should become <b>help</b>, not waste. FoodLink connects Donators, NGOs, and Riders so
+        surplus food from events reaches people in need—verified for freshness and delivered fast.
+      </p>
+      <div class="cta">
+        <a class="btn" href="#contact">Make a Pickup Request</a>
+        <a class="btn ghost" href="#about">Learn More</a>
+      </div>
+
+      <div class="metrics" aria-label="Quick stats">
+        <div class="metric"><b>48+</b> professional staff</div>
+        <div class="metric"><b>24</b> partner cities</div>
+        <div class="metric"><b>3,578</b> satisfied clients</div>
+      </div>
+    </div>
+
+    <aside class="portrait" aria-label="Hero image">
+      <div class="ph" aria-hidden="true"></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================== PARTNERS STRIP ============================== -->
+<div class="partners-strip">
+  <div class="container marquee" aria-label="Trusted partners marquee">
+    <ul>
+      <li>Logoi psum</li><li>Logoi psum</li><li>Logoi psum</li><li>Logoi psum</li>
+      <li>Logoi psum</li><li>Logoi psum</li><li>Logoi psum</li><li>Logoi psum</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================== ABOUT ============================== -->
+<section id="about" class="about" aria-label="About FoodLink">
+  <div class="container">
+    <h2 class="section-title">We Are The Best Redistribution Network in Town</h2>
+    <p class="section-sub">
+      FoodLink is a technology-first initiative that bridges <b>food waste</b> and <b>food insecurity</b>.
+      Donators request pickups; NGO admins assign riders; volunteers verify quality and distribute meals to reported
+      hot-spots. Everything is auditable, safe, and lightning fast.
+    </p>
+
+    <div class="cols">
+      <div>
+        <div class="pill-cards">
+          <div class="pill">
+            <h4>Vision</h4>
+            <p class="section-sub">A city where no safe meal gets wasted and no person sleeps hungry.</p>
+          </div>
+          <div class="pill">
+            <h4>Mission</h4>
+            <p class="section-sub">Use design and data to move good food to the right place at the right time.</p>
+          </div>
+        </div>
+
+        <div class="pill" style="margin-top:14px">
+          <h4>Who uses FoodLink?</h4>
+          <p class="section-sub">Event hosts, restaurants, canteens, campuses, shelters, and volunteer groups.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <span class="kbd">Donator</span>
+            <span class="kbd">NGO Admin</span>
+            <span class="kbd">Rider</span>
+            <span class="kbd">Reporter</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="oval-gallery" aria-label="Imagery">
+        <div class="oval"></div>
+        <div class="oval"></div>
+        <div class="oval"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== HOW IT WORKS ============================== -->
+<section id="how" class="how" aria-label="How it works">
+  <div class="container">
+    <h2 class="section-title">We Provide the Best, Safest Flow</h2>
+    <p class="section-sub">From pickup request to verified distribution—clear, accountable steps.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h4>Donator creates a pickup</h4>
+        <p class="section-sub">Location, food type, quantity—submitted in seconds via web or mobile.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h4>NGO assigns a rider</h4>
+        <p class="section-sub">Admins see pending requests and match the closest available volunteer.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h4>Verification on site</h4>
+        <p class="section-sub">Rider completes hygiene checklist; low scores are flagged and not delivered.</p>
+      </div>
+      <div class="step">
+        <div class="num">4</div>
+        <h4>Distribution &amp; reporting</h4>
+        <p class="section-sub">Meals go to mapped hot-spots submitted by community reporters.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SERVICES / VALUE ============================== -->
+<section id="services" class="services" aria-label="Key services">
+  <div class="container">
+    <h2 class="section-title">Our Services</h2>
+    <p class="section-sub">Built for reliability and trust; polished for everyday use.</p>
+
+    <div class="grid-3">
+      <article class="service">
+        <div class="ico">📍</div>
+        <h3>Geo-aware Dispatch</h3>
+        <p>Google Maps or OpenStreetMap routing ensures swift pickups and optimized routes.</p>
+        <a class="btn" href="#api">Open API</a>
+      </article>
+      <article class="service">
+        <div class="ico">🔔</div>
+        <h3>Live Notifications</h3>
+        <p>FCM alerts for riders; ETAs and completion confirmations for donators and NGOs.</p>
+        <a class="btn" href="#modules">See Modules</a>
+      </article>
+      <article class="service">
+        <div class="ico">🛡️</div>
+        <h3>Verification &amp; Audit</h3>
+        <p>Checklist + rating with photo proof; chain of custody logged for transparency.</p>
+        <a class="btn" href="#impact">View Impact</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== REVIEWS ============================== -->
+<section id="reviews" class="reviews" aria-label="Success stories & reviews">
+  <div class="container">
+    <h2 class="section-title">Success Stories &amp; Reviews</h2>
+    <p class="section-sub">Real experiences from our community.</p>
+
+    <div class="rail">
+      <article class="review">
+        <div class="head"><div class="avatar"></div><div><b>Aarav • Donator</b><div class="stars"></div></div></div>
+        <p>“Leftover wedding food reached two shelters within an hour. The process felt safe and simple.”</p>
+      </article>
+      <article class="review">
+        <div class="head"><div class="avatar"></div><div><b>HopeHands NGO</b><div class="stars"></div></div></div>
+        <p>“Volunteer assignment takes seconds. The verification trail keeps our auditors happy.”</p>
+      </article>
+      <article class="review">
+        <div class="head"><div class="avatar"></div><div><b>Sana • Rider</b><div class="stars"></div></div></div>
+        <p>“Route hints saved time and fuel. Karma badges are a nice touch.”</p>
+      </article>
+      <article class="review">
+        <div class="head"><div class="avatar"></div><div><b>Campus Canteen</b><div class="stars"></div></div></div>
+        <p>“Daily pickups reduced our waste to near zero—FoodLink just works.”</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== PARTNERS ============================== -->
+<section class="partners" aria-label="Partners">
+  <div class="container-wide">
+    <h2 class="section-title">Our Trusted Partners</h2>
+    <p class="section-sub">Grassroots NGOs, campuses, restaurants and city programs.</p>
+
+    <div class="logos">
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+      <div class="partner">Logoipsum</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== IMPACT STATS ============================== -->
+<section id="impact" class="stats" aria-label="Impact in stats">
+  <div class="container">
+    <h2 class="section-title">Our Impact in Stats</h2>
+    <p class="section-sub">Measured outcomes from transparent operations.</p>
+
+    <div class="grid-4">
+      <div class="stat"><h3>1.2M+</h3><p>Meals redistributed</p></div>
+      <div class="stat"><h3>420+</h3><p>Partner NGOs</p></div>
+      <div class="stat"><h3>15k</h3><p>Active Riders</p></div>
+      <div class="stat"><h3>6.8k t</h3><p>Food waste avoided</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== MODULES ============================== -->
+<section id="modules" class="modules" aria-label="Modules">
+  <div class="container">
+    <h2 class="section-title">Modules Overview</h2>
+    <p class="section-sub">Clear responsibilities with a friendly UI for each role.</p>
+
+    <div class="mod-grid">
+      <div class="mod">
+        <h4>Donator</h4>
+        <ul>
+          <li>Create food pickup request (location, quantity, type)</li>
+          <li>Track status and get notifications</li>
+        </ul>
+      </div>
+      <div class="mod">
+        <h4>NGO Admin</h4>
+        <ul>
+          <li>View and assign pickup requests</li>
+          <li>Monitor volunteer activity and distribution</li>
+        </ul>
+      </div>
+      <div class="mod">
+        <h4>Rider / Volunteer</h4>
+        <ul>
+          <li>Receive nearby pickups and accept/decline</li>
+          <li>Verify food quality &amp; update status</li>
+        </ul>
+      </div>
+      <div class="mod">
+        <h4>Reporter</h4>
+        <ul>
+          <li>Send alerts about people in need</li>
+          <li>Help NGOs plan distribution routes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== API SHOWCASE ============================== -->
+<section id="api" class="api" aria-label="API endpoints">
+  <div class="container">
+    <h2 class="section-title">Developer-Ready API</h2>
+    <p class="section-sub">Simple, secure endpoints for automation and integrations.</p>
+
+    <div class="cols">
+      <div class="code" aria-label="Code sample">
+<span class="comment"># Donator — Create a new pickup</span>
+POST /api/requests/pickup
+Content-Type: application/json
+{
+  "location": "28.6139, 77.2090",
+  "quantity": 60,
+  "foodType": "Veg Meals",
+  "notes": "Wedding leftovers"
+}
+
+<span class="comment"># Rider — Get nearby pickups</span>
+GET /api/requests/nearby?lat=28.61&lng=77.20&radius=5km
+
+<span class="comment"># Volunteer lifecycle</span>
+POST /api/volunteer/accept   { "requestId": "R-1029" }
+POST /api/volunteer/verify   { "requestId": "R-1029", "score": 4, "checklist": ["hot", "sealed"] }
+
+<span class="comment"># Reporter — Flag a hotspot</span>
+POST /api/alerts/needy       { "coords": "28.64,77.20", "description":"Under flyover" }
+
+<span class="comment"># NGO Admin — queue</span>
+GET  /api/admin/requests?status=pending
+      </div>
+
+      <div class="pill">
+        <h4>Tech Stack</h4>
+        <p class="section-sub">Frontend: React or Flutter • Backend: Node/Express or Django/Flask • DB: MongoDB/Postgres • Maps: Google Maps / OSM • Notifications: FCM.</p>
+        <h4 style="margin-top:14px">Test Cases</h4>
+        <ul>
+          <li>Donator creates a pickup → Volunteers notified</li>
+          <li>Rider accepts → Status becomes <b>Accepted</b></li>
+          <li>Low verification rating → Food not distributed</li>
+          <li>Reporter alert → Visible on admin dashboard</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FAQ ============================== -->
+<section class="faq" id="faq" aria-label="FAQ">
+  <div class="container">
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <div class="qa">
+      <details>
+        <summary>Is FoodLink free to use?</summary>
+        <p>Yes. We operate via grants and community support. Donations help us run servers and training.</p>
+      </details>
+      <details>
+        <summary>What if the food is unsafe?</summary>
+        <p>Riders rate quality via checklist. Low scores halt distribution and notify admins automatically.</p>
+      </details>
+      <details>
+        <summary>Which maps do you support?</summary>
+        <p>Google Maps or OpenStreetMap—selected by the partner city. Both support offline-tolerant routing.</p>
+      </details>
+      <details>
+        <summary>Can I integrate my campus canteen?</summary>
+        <p>Yes. Use the REST API to automate recurring pickups and add staff as riders.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== CTA ============================== -->
+<section class="cta" aria-label="Call to action">
+  <div class="container">
+    <div class="panel">
+      <div>
+        <h3 class="section-title" style="margin:0">Ready to reduce food waste?</h3>
+        <p class="section-sub">Join as a Donator, Rider, or NGO. Start with your first pickup today.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn" href="#">Sign in as Donator</a>
+        <a class="btn ghost" href="#">Sign in as Rider</a>
+        <a class="btn ghost" href="#">Sign in as NGO</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+  <div class="container footer-grid">
+    <div>
+      <a class="brand" href="#"><div class="logo">FL</div><b>FoodLink</b></a>
+      <p class="copy">Redistribute responsibly. At scale. With care.</p>
+    </div>
+    <div>
+      <h4>Product</h4>
+      <ul style="list-style:none;padding:0;margin:10px 0;display:grid;gap:8px">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#impact">Impact</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Community</h4>
+      <ul style="list-style:none;padding:0;margin:10px 0;display:grid;gap:8px">
+        <li><a href="#reviews">Reviews</a></li>
+        <li><a href="#modules">Modules</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Contact</h4>
+      <ul style="list-style:none;padding:0;margin:10px 0;display:grid;gap:8px">
+        <li><a href="#api">Developers</a></li>
+        <li><a href="#">Press</a></li>
+        <li><a href="#">Partner with us</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container copy">© 2025 FoodLink. All rights reserved.</div>
+</footer>
+
+</body>
+</html>
