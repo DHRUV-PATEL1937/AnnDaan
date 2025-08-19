@@ -200,8 +200,8 @@ class NeumorphismLoginForm {
             const data = await response.json();
 
             if (response.ok) {
-                // ⭐ FIX: Use the correct key 'appToken'
-                localStorage.setItem('accessToken', data.accessToken);
+                // ✅ FIX: Use the correct key 'appToken'
+                localStorage.setItem('appToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('userName', data.user.name); // Store name for welcome message
 
@@ -235,8 +235,8 @@ class NeumorphismLoginForm {
                 this.tempToken = data.tempToken;
                 this.showUsernameModal();
             } else if (res.ok) {
-                // ⭐ FIX: Use the correct key 'appToken'
-                localStorage.setItem('accessToken', data.accessToken);
+                // ✅ FIX: Use the correct key 'appToken'
+                localStorage.setItem('appToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('userName', data.user.name); // Store name for welcome message
 
@@ -297,8 +297,8 @@ class NeumorphismLoginForm {
             const data = await response.json();
 
             if (response.ok) {
-                // ⭐ FIX: Use the correct key 'appToken'
-                localStorage.setItem('accessToken', data.accessToken);
+                // ✅ FIX: Use the correct key 'appToken'
+                localStorage.setItem('appToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('userName', data.user.name); // Store name for welcome message
 
@@ -343,7 +343,7 @@ class NeumorphismLoginForm {
         
         setTimeout(() => {
             console.log('Redirecting to dashboard...');
-            // ⭐ FIX: Use a relative path for redirection
+            // Use a relative path for redirection
             window.location.href = './dashboard.html';
         }, 2500);
     }

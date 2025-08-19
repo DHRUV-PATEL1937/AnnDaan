@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ⭐ API Wrapper for authenticated requests with auto-refresh logic
     const api = {
         async post(endpoint, body) {
-            let accessToken = localStorage.getItem('accessToken');
+            let accessToken = localStorage.getItem('appToken');
             
             let response = await fetch(`http://localhost:5000${endpoint}`, {
                 method: 'POST',
@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log("Access token expired. Attempting to refresh...");
                 const refreshed = await this.refreshToken();
                 if (refreshed) {
-                    accessToken = localStorage.getItem('accessToken');
+                    accessToken = localStorage.getItem('appToken');
                     // Retry the original request with the new token
                     console.log("Retrying original request with new token...");
                     response = await fetch(`http://localhost:5000${endpoint}`, {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('appToken', data.accessToken);
                     console.log("Token refreshed successfully.");
                     return true;
                 }
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Auth UI Management ---
     function checkLoginStatus() {
-        const token = localStorage.getItem('accessToken');
+        const token = localStorage.getItem('appToken');
         if (token) {
             authLinks.style.display = 'none';
             welcomeMessage.style.display = 'block';
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Clear local storage regardless
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem('appToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('userName');
         alert("You have been logged out.");
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', async function(event) {
         event.preventDefault();
 
-        if (!localStorage.getItem('accessToken')) {
+        if (!localStorage.getItem('appToken')) {
             alert("You must be logged in to make a donation. Redirecting to login page.");
             window.location.href = 'login.html';
             return;
@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
             - Calculated Expiry Time: "${new Date(details.expiryDateTime).toLocaleString()}"
         `;
 
-        const apiKey = "";
+        const apiKey = ""; // IMPORTANT: Do not expose your API key on the client-side in a real application.
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
         
         const payload = {
@@ -232,10 +232,17 @@ document.addEventListener('DOMContentLoaded', function() {
         return "Your donation details have been recorded. Thank you for your generosity!";
     }
     
-    const dateTimeInputs = document.querySelectorAll('input[type="datetime-local"]');
-    dateTimeInputs.forEach(input => {
+    // This section is changed to only affect the pickup time input.
+    
+    // Select the pickup time input specifically by its ID
+    const pickupTimeInput = document.getElementById('pickupTime');
+    
+    // Check if the element exists before trying to modify it
+    if (pickupTimeInput) {
         const now = new Date();
+        // Adjust for the local timezone to set the minimum correctly
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-        input.min = now.toISOString().slice(0, 16);
-    });
+        // Set the minimum selectable time to the current time
+        pickupTimeInput.min = now.toISOString().slice(0, 16);
+    }
 });
