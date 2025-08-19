@@ -7,9 +7,97 @@
     <link rel="stylesheet" href="food_donation_form.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand: #5D87FF;
+            --dark-blue: #2A3547;
+            --text: #2A3547;
+            --muted: #7C8FAC;
+            --border: #e5eaef;
+            --light-bg: #f6f9fc;
+            --white: #ffffff;
+            --grad: linear-gradient(135deg, #6B8DFF 0%, #5D87FF 100%);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text);
+            line-height: 1.6;
+            position: relative;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .btn {
+            background: var(--grad);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 5px 15px rgba(93, 135, 255, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(93, 135, 255, 0.3);
+        }
+        
+        /* Decorative shapes */
+        .shape {
+            position: absolute;
+            z-index: -1;
+            opacity: 0.4;
+        }
+        
+        .shape-1 {
+            top: 10%;
+            left: 5%;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #5D87FF, #6E94FF);
+            filter: blur(80px);
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .shape-2 {
+            bottom: 10%;
+            right: 5%;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #5D87FF, #8CAAFF);
+            filter: blur(60px);
+            animation: float 10s ease-in-out infinite reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(20px, -20px); }
+            100% { transform: translate(0, 0); }
+        }
+    </style>
 </head>
 <body>
+    <!-- Decorative shapes -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
 
     <!-- Header & Navigation -->
     <header class="site-header">
@@ -17,8 +105,10 @@
             <nav class="main-nav">
                 <a href="#" class="logo">FoodLink</a>
                 <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
                     <li><a href="#how-it-works">How It Works</a></li>
                     <li><a href="#donate-form">Donate Now</a></li>
+                    <li><a href="dashboard.html">Dashboard</a></li>
                     <!-- ⭐ UPDATED: Login/Logout Links -->
                     <li id="auth-links">
                         <a href="login.html" class="login-link">Login</a>
@@ -38,7 +128,7 @@
                 <div class="hero-content">
                     <h1>Turn Your Leftovers into a Lifeline.</h1>
                     <p class="subtitle">Join our community in fighting food waste and hunger. Your extra food can be a meal for someone in need. It's simple, fast, and makes a real difference.</p>
-                    <a href="#donate-form" class="cta-button">Donate Food Now</a>
+                    <a href="#donate-form" class="btn">Donate Food Now</a>
                 </div>
             </div>
         </section>
@@ -130,7 +220,7 @@
                         </div>
                     </fieldset>
 
-                    <button type="submit">List My Food Donation</button>
+                    <button type="submit" class="btn">List My Food Donation</button>
                 </form>
 
                 <div id="loaderContainer" class="hidden loader-container">

@@ -86,82 +86,109 @@ app.get("/", (req, res) => {
   res.send("Server is up and running! Welcome to the authentication API.");
 });
 
+
 // --- Traditional Email/Password Signup Route (UPDATED) ---
 app.post("/signup", async (req, res) => {
-  try {
-    // Destructure username from the request body
-    const { name, username, email, password } = req.body;
+    try {
+        const { name, username, email, password } = req.body;
 
-    // Validate all required fields
-    if (!name || !username || !email || !password) {
-      return res
-        .status(400)
-        .json({
-          message: "Full name, username, email, and password are required.",
+        if (!name || !username || !email || !password) {
+            return res.status(400).json({ message: 'All fields are required.' });
+        }
+        // ... (keep other validations for password and username length)
+
+        const existingUser = await User.findOne({ $or: [{ email: email }, { username: username }] });
+        
+        if (existingUser && existingUser.isEmailVerified) {
+            // If a verified user exists, reject the signup
+            return res.status(409).json({ message: 'An account with this email or username already exists.' });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = Date.now() + 600000; // 10 minutes from now
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        let user;
+        if (existingUser && !existingUser.isEmailVerified) {
+            // If an unverified user exists, update them with the new details and a new OTP
+            user = existingUser;
+            user.name = name;
+            user.username = username;
+            user.password = hashedPassword;
+            user.emailVerificationToken = otp;
+            user.emailVerificationExpires = expiry;
+            console.log(`✅ Resending OTP for unverified user: ${email}`);
+        } else {
+            // Create a new, unverified user
+            user = new User({
+                name,
+                username,
+                email,
+                password: hashedPassword,
+                emailVerificationToken: otp,
+                emailVerificationExpires: expiry,
+                isEmailVerified: false
+            });
+            console.log(`✅ Created new unverified user: ${email}`);
+        }
+
+        await user.save();
+
+        // Send the OTP email
+        const transporter = nodemailer.createTransport({
+            service: EMAIL_SERVICE,
+            auth: { user: EMAIL_USER, pass: EMAIL_PASS },
         });
+
+        const mailOptions = {
+            to: user.email,
+            from: `AnnDan <${EMAIL_USER}>`,
+            subject: "Verify Your Email Address",
+            html: `<p>Your One-Time Password (OTP) for email verification is: <strong>${otp}</strong>. It will expire in 10 minutes.</p>`,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log(`✅ Verification OTP sent to: ${user.email}`);
+        
+        res.status(200).json({ message: 'A verification OTP has been sent to your email.' });
+
+    } catch (error) {
+        console.error("❌ Signup error:", error);
+        res.status(500).json({ message: 'An error occurred during signup.' });
     }
-    if (password.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters long." });
+});
+
+// ⭐ NEW: Endpoint to verify the OTP
+app.post("/api/auth/verify-otp", async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ message: "Email and OTP are required." });
+        }
+
+        const user = await User.findOne({ 
+            email: email,
+            emailVerificationToken: otp,
+            emailVerificationExpires: { $gt: Date.now() } // Check if token is not expired
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid OTP or it has expired. Please try signing up again." });
+        }
+
+        // Verification successful
+        user.isEmailVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+
+        console.log(`✅ Email verified successfully for: ${user.email}`);
+        res.status(200).json({ message: "Email verified successfully! You can now log in." });
+
+    } catch (error) {
+        console.error("❌ OTP verification error:", error);
+        res.status(500).json({ message: "An error occurred during verification." });
     }
-    if (username.length < 3) {
-      return res
-        .status(400)
-        .json({ message: "Username must be at least 3 characters long." });
-    }
-
-    // Check if either the email or username already exists
-    const existingUser = await User.findOne({
-      $or: [{ email: email }, { username: username }],
-    });
-    if (existingUser) {
-      let message = "An account with this email or username already exists.";
-      if (existingUser.email === email) {
-        message =
-          "An account with this email already exists. Please try logging in.";
-      } else if (existingUser.username === username) {
-        message = "This username is already taken. Please choose another one.";
-      }
-      console.log(`Signup attempt failed: ${message}`);
-      return res.status(409).json({ message });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create the new user with the username
-    const newUser = new User({
-      name,
-      username, // Save the username
-      email,
-      password: hashedPassword,
-      googleId: null,
-      createdAt: Date.now(),
-      lastLoginAt: Date.now(),
-    });
-
-    await newUser.save();
-    console.log(`✅ Traditional user signed up successfully: ${newUser.email}`);
-    res.status(201).json({ message: "User registered successfully!" });
-  } catch (error) {
-    console.error("❌ Signup error:", error);
-
-    let errorMessage = "Signup failed. Please try again.";
-    let statusCode = 500;
-
-    if (error.code === 11000) {
-      errorMessage = "An account with this email or username already exists.";
-      statusCode = 409;
-    } else if (error.name === "ValidationError") {
-      const validationErrors = Object.values(error.errors).map(
-        (err) => err.message
-      );
-      errorMessage = `Validation failed: ${validationErrors.join(", ")}`;
-      statusCode = 400;
-    }
-
-    res.status(statusCode).json({ message: errorMessage });
-  }
 });
 
 // --- Traditional Email/Password Login Route ---

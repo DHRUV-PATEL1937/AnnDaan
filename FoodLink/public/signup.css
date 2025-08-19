@@ -1,79 +1,111 @@
-/* Neumorphism Signup Form - Complete & Self-Contained */
+/* Signup Form Styles - Updated to match dashboard theme */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Basic styles are now handled by inline CSS in the HTML */
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #e0e5ec;
     min-height: 100vh;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    line-height: 1.6;
+    flex-direction: column;
+    padding-top: 80px;
+    background-color: #f8f9fa;
 }
 
+/* Navbar styles */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    padding: 15px 0;
+    z-index: 100;
+}
+
+.navbar .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar .logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--brand);
+    text-decoration: none;
+}
+
+.navbar ul {
+    display: flex;
+    list-style: none;
+    gap: 20px;
+}
+
+.navbar ul li a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.navbar ul li a:hover {
+    color: var(--brand);
+}
+
+/* Signup container and card */
 .signup-container {
     width: 100%;
     max-width: 420px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .signup-card {
-    background: #e0e5ec;
-    border-radius: 30px;
-    padding: 50px 40px;
-    box-shadow: 
-        20px 20px 60px #bec3cf,
-        -20px -20px 60px #ffffff;
+    background: white;
+    border-radius: 12px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     position: relative;
     transition: all 0.3s ease;
 }
 
 .signup-card:hover {
     transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
 }
 
 .signup-header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
 .neu-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 24px;
-    background: #e0e5ec;
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 20px;
+    background: rgba(0, 200, 150, 0.1);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 
-        8px 8px 20px #bec3cf,
-        -8px -8px 20px #ffffff,
-        inset 0 0 0 #bec3cf,
-        inset 0 0 0 #ffffff;
     transition: all 0.3s ease;
 }
 
 .neu-icon:hover {
-    box-shadow: 
-        4px 4px 10px #bec3cf,
-        -4px -4px 10px #ffffff,
-        inset 4px 4px 10px #bec3cf,
-        inset -4px -4px 10px #ffffff;
+    transform: scale(1.05);
+    background: rgba(0, 200, 150, 0.15);
 }
 
 .icon-inner {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c7293;
+    color: var(--brand);
 }
 
 .icon-inner svg {
@@ -82,38 +114,35 @@ body {
 }
 
 .signup-header h2 {
-    color: #3d4468;
-    font-size: 2rem;
+    color: var(--text);
+    font-size: 28px;
     font-weight: 600;
     margin-bottom: 8px;
 }
 
 .signup-header p {
-    color: #9499b7;
+    color: var(--muted);
     font-size: 15px;
     font-weight: 400;
 }
 
-/* Neumorphic Input Styles */
+/* Form Input Styles */
 .form-group {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
     position: relative;
 }
 
 .neu-input {
     position: relative;
-    background: #e0e5ec;
-    border-radius: 15px;
-    box-shadow: 
-        inset 8px 8px 16px #bec3cf,
-        inset -8px -8px 16px #ffffff;
+    background: #ffffff;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
     transition: all 0.3s ease;
 }
 
 .neu-input:focus-within {
-    box-shadow: 
-        inset 4px 4px 8px #bec3cf,
-        inset -4px -4px 8px #ffffff;
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px rgba(0, 200, 150, 0.1);
 }
 
 .neu-input input {
@@ -122,7 +151,7 @@ body {
     border: none;
     padding: 20px 24px;
     padding-left: 55px;
-    color: #3d4468;
+    color: var(--text);
     font-size: 16px;
     font-weight: 500;
     outline: none;
@@ -138,7 +167,7 @@ body {
     left: 55px;
     top: 50%;
     transform: translateY(-50%);
-    color: #9499b7;
+    color: var(--muted);
     font-size: 16px;
     font-weight: 400;
     pointer-events: none;
@@ -149,7 +178,7 @@ body {
 .neu-input input:not(:placeholder-shown) + label {
     top: 8px;
     font-size: 12px;
-    color: #6c7293;
+    color: var(--brand);
     transform: translateY(0);
 }
 
@@ -160,7 +189,7 @@ body {
     transform: translateY(-50%);
     width: 20px;
     height: 20px;
-    color: #9499b7;
+    color: var(--brand);
     transition: all 0.3s ease;
 }
 
@@ -178,123 +207,89 @@ body {
     padding-right: 50px;
 }
 
-.neu-toggle {
+.password-toggle {
     position: absolute;
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    background: #e0e5ec;
+    background: transparent;
     border: none;
-    width: 35px;
-    height: 35px;
-    border-radius: 10px;
+    width: 24px;
+    height: 24px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9499b7;
-    box-shadow: 
-        4px 4px 10px #bec3cf,
-        -4px -4px 10px #ffffff;
+    color: var(--muted);
     transition: all 0.3s ease;
+    z-index: 1;
 }
 
-.neu-toggle:hover {
-    color: #6c7293;
+.password-toggle:hover {
+    color: var(--brand);
 }
 
-.neu-toggle:active {
-    box-shadow: 
-        inset 2px 2px 5px #bec3cf,
-        inset -2px -2px 5px #ffffff;
+.password-toggle:active {
+    transform: translateY(-50%) scale(0.95);
 }
 
-.neu-toggle svg {
-    width: 18px;
-    height: 18px;
+.password-toggle svg {
+    width: 100%;
+    height: 100%;
+}
+
+.eye-open {
+    display: none;
 }
 
 .eye-closed {
-    display: none;
-}
-
-.neu-toggle.show-password .eye-open {
-    display: none;
-}
-
-.neu-toggle.show-password .eye-closed {
     display: block;
 }
 
-/* Neumorphic Button */
-.neu-button {
+input[type="text"] ~ .password-toggle .eye-open {
+    display: block;
+}
+
+input[type="text"] ~ .password-toggle .eye-closed {
+    display: none;
+}
+
+/* Button styling is now handled by the .btn class in the inline CSS */
+
+.signup-btn {
     width: 100%;
-    background: #e0e5ec;
-    border: none;
-    border-radius: 15px;
-    padding: 18px 32px;
-    color: #3d4468;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
     position: relative;
-    margin-bottom: 30px;
-    box-shadow: 
-        8px 8px 20px #bec3cf,
-        -8px -8px 20px #ffffff;
-    transition: all 0.3s ease;
+    margin-bottom: 24px;
     overflow: hidden;
-}
-
-.neu-button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.5s ease;
-}
-
-.neu-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 
-        12px 12px 30px #bec3cf,
-        -12px -12px 30px #ffffff;
-}
-
-.neu-button:hover::before {
-    left: 100%;
-}
-
-.neu-button:active {
-    transform: translateY(0);
-    box-shadow: 
-        inset 4px 4px 10px #bec3cf,
-        inset -4px -4px 10px #ffffff;
 }
 
 .btn-text {
     position: relative;
     z-index: 1;
-    transition: opacity 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .btn-loader {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--grad);
+    border-radius: 999px;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    visibility: hidden;
+    transition: all 0.3s ease;
 }
 
 .neu-spinner {
     width: 20px;
     height: 20px;
-    border: 3px solid #bec3cf;
-    border-top: 3px solid #6c7293;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-top: 3px solid #ffffff;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -304,34 +299,33 @@ body {
     100% { transform: rotate(360deg); }
 }
 
-.neu-button.loading .btn-text {
+.signup-btn.loading .btn-text {
     opacity: 0;
 }
 
-.neu-button.loading .btn-loader {
+.signup-btn.loading .btn-loader {
     opacity: 1;
+    visibility: visible;
 }
 
 
 /* Signin Link */
 .signin-link {
     text-align: center;
-}
-
-.signin-link p {
-    color: #9499b7;
+    margin-top: 20px;
+    color: var(--muted);
     font-size: 14px;
 }
 
 .signin-link a {
-    color: #6c7293;
+    color: var(--brand);
     text-decoration: none;
     font-weight: 600;
-    transition: color 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .signin-link a:hover {
-    color: #3d4468;
+    text-decoration: underline;
 }
 
 /* Error States */
@@ -360,50 +354,93 @@ body {
 
 /* Success Message */
 .success-message {
-    display: none;
-    text-align: center;
-    padding: 40px 20px;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: all 0.5s ease;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    transform: translateX(150%);
+    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    z-index: 1000;
 }
 
-.success-message.show {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
+.success-message.active {
+    transform: translateX(0);
 }
 
-.success-message .neu-icon {
-    background: #e0e5ec;
-    color: #00c896;
-    margin-bottom: 20px;
+.success-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--brand);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
 }
 
-.success-message h3 {
-    color: #3d4468;
-    font-size: 1.5rem;
-    margin-bottom: 8px;
+.success-icon svg {
+    width: 24px;
+    height: 24px;
+    color: #ffffff;
 }
 
-.success-message p {
-    color: #9499b7;
+.success-content h4 {
+    color: var(--text);
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.success-content p {
+    color: var(--muted);
     font-size: 14px;
+    margin: 0;
 }
 
 /* Mobile Responsive */
+@media (max-width: 992px) {
+    .signup-container {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .signup-container {
+        padding: 16px;
+    }
+    
+    .signup-card {
+        padding: 24px 20px;
+    }
+    
+    .navbar .container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .navbar ul {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+}
+
 @media (max-width: 480px) {
     body {
         padding: 16px;
     }
     
     .signup-card {
-        padding: 35px 25px;
+        padding: 20px 16px;
         border-radius: 20px;
     }
     
     .signup-header h2 {
-        font-size: 1.75rem;
+        font-size: 24px;
     }
     
     .neu-input input {

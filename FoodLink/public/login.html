@@ -1,15 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Neumorphism Login Form</title>
-        <link rel="stylesheet" href="login.css">
-        <script src="https://accounts.google.com/gsi/client" async defer></script>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodLink — Login</title>
+    <meta name="description" content="Login to FoodLink to donate food and help those in need." />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+    :root {
+      --brand: #2e7d64;
+      --text: #1b2b22;
+      --muted: #5d6b61;
+      --accent-2: #ecf3ef;
+      --bg: #f7faf7;
+      --shadow-1: 0 2px 10px rgba(0,0,0,0.05);
+      --shadow-2: 0 8px 30px rgba(21,41,32,.1);
+      --ring: 0 0 0 3px rgba(46,125,100,.3);
+      --radius-sm: 12px;
+      --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
+      --pill: linear-gradient(180deg,#ffffff,#eef3ef);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height:1.5;
+    }
+    
+    /* ---------- Utilities ---------- */
+    .container{max-width:1200px;margin:0 auto;padding:0 24px}
+    .container-wide{max-width:1280px;margin:0 auto;padding:0 24px}
+    .grid{display:grid;gap:24px}
+    .center{text-align:center}
+    .btn{
+      --pad:14px 22px;
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      padding:var(--pad);
+      border-radius:999px;border:0;cursor:pointer;text-decoration:none;
+      color:#fff;background:var(--grad);font-weight:700;
+      box-shadow:var(--shadow-2);
+      transition:transform .18s ease, box-shadow .25s ease, filter .25s ease;
+    }
+    .btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
+    .btn:active{transform:translateY(0)}
+    .btn.ghost{
+      color:var(--brand);background:transparent;border:1.5px solid rgba(46,125,100,.25);box-shadow:none
+    }
+    
+    /* ---------- Decorative Dots / Shapes ---------- */
+    .shape{
+      position:absolute;border-radius:50%;filter:blur(30px);opacity:.25;pointer-events:none
+    }
+    .shape.a{width:240px;height:240px;background:#bfe7d1;left:-60px;top:-60px}
+    .shape.b{width:300px;height:300px;background:#dcefe6;right:-40px;top:-80px}
+    </style>
+    <link rel="stylesheet" href="login.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
 
     <body>
+        <!-- Decorative shapes -->
+        <div class="shape a"></div>
+        <div class="shape b"></div>
+
+        <!-- ============================== NAVBAR ============================== -->
+        <header class="navbar">
+            <div class="container">
+                <div class="brand">
+                    <i class="fas fa-utensils"></i>
+                    <h1>FoodLink</h1>
+                </div>
+                <nav class="nav">
+                    <ul>
+                        <li><a href="dashboard.html#how">How It Works</a></li>
+                        <li><a href="dashboard.html#impact">Impact</a></li>
+                        <li><a href="dashboard.html#about">About Us</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
         <div class="login-container">
             <div class="login-card">
                 <div class="login-header">
@@ -85,7 +160,7 @@
                         <a href="forgot-password.html" class="forgot-link">Forgot password?</a>
                     </div>
 
-                    <button type="submit" class="neu-button login-btn">
+                    <button type="submit" class="btn login-btn">
                         <span class="btn-text">Sign In</span>
                         <div class="btn-loader">
                             <div class="neu-spinner"></div>
@@ -140,7 +215,7 @@
                         </div>
                         <span class="error-message" id="modalUsernameError"></span>
                     </div>
-                    <button type="submit" class="neu-button">Complete Signup</button>
+                    <button type="submit" class="btn">Complete Signup</button>
                 </form>
             </div>
         </div>

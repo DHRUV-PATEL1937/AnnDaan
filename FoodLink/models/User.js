@@ -15,11 +15,11 @@ const userSchema = new mongoose.Schema({
     },
 
     // For Google Sign-Ins
-    // googleId: {
-    //     type: String,
-    //     unique: true,
-    //     sparse: true, 
-    // },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true, 
+    },
 
     // Required for ALL users
     name: {
@@ -35,15 +35,23 @@ const userSchema = new mongoose.Schema({
         trim: true,
     },
     
-    // ⭐ NEW: Field to store the long-lived refresh token
-    refreshToken: {
+    // ⭐ NEW: Fields for Email Verification
+    isEmailVerified: {
+        type: Boolean,
+        default: false,
+    },
+    emailVerificationToken: {
         type: String,
+    },
+    emailVerificationExpires: {
+        type: Date,
     },
 
     // Optional additional user details
     picture: { type: String, default: null },
     phone: { type: String, default: null },
     address: { type: String, default: null },
+    refreshToken: { type: String },
 
     // Timestamps
     createdAt: { type: Date, default: Date.now },
