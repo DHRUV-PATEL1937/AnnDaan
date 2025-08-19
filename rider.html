@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FoodLink Rider Dashboard</title>
+
+<!-- Fonts: Poppins -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Icons: Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<!-- Leaflet (OSM) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+    :root {
+        --primary-color: #f57c00; /* Zomato/Swiggy inspired orange */
+        --primary-dark: #e65100;
+        --secondary-color: #2b3d33;
+        --success-color: #4caf50;
+        --error-color: #f44336;
+        --info-color: #2196f3;
+        --purple-color: #9c27b0;
+        --text-dark: #1e293b;
+        --text-light: #64748b;
+        --bg-light: #f8fafc;
+        --border-color: #e2e8f0;
+        --font-family: 'Poppins', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        font-family: var(--font-family);
+        background: var(--bg-light);
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    /* Header */
+    header {
+        background: #fff;
+        padding: 0.75rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--secondary-color);
+    }
+    header h1 .fa-motorcycle { color: var(--primary-color); }
+    header nav a {
+        color: var(--text-light);
+        margin-left: 1.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+        cursor: pointer;
+    }
+    header nav a:hover, header nav a.active {
+        color: var(--primary-color);
+    }
+
+    /* Dashboard Layout */
+    .dashboard {
+        padding: 2rem;
+        display: grid;
+        grid-template-columns: 320px 1fr 320px;
+        gap: 2rem;
+    }
+
+    /* Panel Base */
+    .panel {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        border: 1px solid var(--border-color);
+    }
+    .panel h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Profile Panel */
+    .profile { text-align: center; }
+    .profile img {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        margin-bottom: 1rem;
+        border: 4px solid var(--primary-color);
+        padding: 3px;
+    }
+    .profile h3 { font-size: 1.2rem; font-weight: 600; }
+    .profile .muted { color: var(--text-light); font-size: 0.9rem; }
+    .status { margin: 1.25rem 0; }
+    .status .status-toggle {
+        display: flex;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .status button {
+        flex: 1;
+        padding: 0.75rem;
+        border: 0;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        background: transparent;
+        color: var(--text-light);
+    }
+    .status button.active {
+        background: var(--primary-color);
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(245, 124, 0, 0.3);
+    }
+    .quick-stats { margin-top: 1.5rem; text-align: left; }
+    .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        font-size: 0.95rem;
+    }
+    .stat-item + .stat-item { border-top: 1px solid var(--border-color); }
+    .stat-item span { color: var(--text-light); }
+    .stat-item b { color: var(--text-dark); font-weight: 600; }
+    .stat-item .fa-star { color: #ffca28; }
+
+    /* Orders Column */
+    .orders-header { display: flex; align-items: center; justify-content: space-between; }
+    .pill { background: var(--primary-color); color: #fff; border-radius: 999px; padding: 0.25rem 0.75rem; font-weight: 600; font-size: 0.8rem; }
+    .order-list { display: grid; gap: 1rem; margin-top: 1rem; }
+    .card {
+        background: #fff;
+        padding: 1rem;
+        border-radius: 14px;
+        transition: all 0.25s ease;
+        border: 1px solid var(--border-color);
+    }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+    .card .row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem; }
+    .card .icon { color: var(--primary-color); font-size: 1.1rem; width: 20px; text-align: center; }
+    .pickup { font-weight: 600; }
+    .dropoff { font-weight: 600; }
+    .meta { color: var(--text-light); font-size: 0.85rem; margin-top: 0.75rem; }
+    .tag { background: #f1f5f9; border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.75rem; font-weight: 500; }
+    .btns { display: flex; gap: 0.5rem; margin-top: 1rem; flex-direction: column; }
+    .btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        font-family: var(--font-family);
+        transition: all 0.2s ease;
+        font-size: 0.9rem;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-accept { background: var(--success-color); color: #fff; }
+    .btn-reject { background: #fff; color: var(--error-color); border: 1px solid var(--error-color); }
+    .btn-start { background: var(--info-color); color: #fff; }
+    .btn-complete { background: var(--purple-color); color: #fff; }
+    .btn-pickup { background: var(--primary-color); color: #fff; }
+    .btn-smart-tip {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        color: #fff;
+    }
+    .btn-smart-tip.loading {
+        background: var(--text-light);
+        cursor: not-allowed;
+    }
+    .stage {
+        margin-top: 1rem;
+        background: #f8fafc;
+        border: 1px dashed var(--border-color);
+        color: var(--text-dark);
+        padding: 0.6rem 0.8rem;
+        font-weight: 600;
+        border-radius: 10px;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+    .smart-tip-display {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        color: #0c4a6e;
+        padding: 0.75rem;
+        margin-top: 1rem;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .otp-section {
+        margin-top: 1rem;
+        text-align: center;
+    }
+    .otp-section .otp-label { font-weight: 600; margin-bottom: 0.5rem; display: block; }
+    .otp-section input {
+        width: 150px;
+        padding: 0.6rem;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        text-align: center;
+        font-size: 1.2rem;
+        letter-spacing: 0.5em;
+    }
+    .otp-section .otp-error { color: var(--error-color); font-size: 0.8rem; margin-top: 0.25rem; }
+
+    /* Map Panel */
+    .map-panel { margin-top: 1.5rem; }
+    #map { width: 100%; height: 400px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    .map-note { color: var(--text-light); font-size: 0.85rem; margin-top: 0.75rem; text-align: center; }
+
+    /* Notifications Panel */
+    .note {
+        padding: 0.8rem 1rem;
+        border-radius: 10px;
+        border-left: 4px solid;
+        font-size: 0.9rem;
+        background: #f8fafc;
+    }
+    .note + .note { margin-top: 0.75rem; }
+    .note.order { border-left-color: var(--success-color); }
+    .note.achievement { border-left-color: var(--purple-color); }
+    .note.warn { border-left-color: var(--primary-color); }
+
+    /* Footer */
+    footer { text-align: center; padding: 1.5rem; background: var(--secondary-color); color: #fff; margin-top: 2rem; }
+
+    /* Modals */
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1040;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .modal {
+        position: fixed;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
+        background: #fff;
+        border-radius: 16px;
+        padding: 2rem;
+        width: 90%;
+        max-width: 500px;
+        z-index: 1050;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .modal-overlay.active, .modal.active { display: block; }
+    .modal-overlay.visible, .modal.visible { opacity: 1; }
+    .modal.visible { transform: translate(-50%, -50%) scale(1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h2 { margin-bottom: 0; font-size: 1.4rem; }
+    .modal-close {
+        background: transparent; border: 0; font-size: 1.5rem; cursor: pointer;
+        color: var(--text-light); transition: color 0.2s ease;
+    }
+    .modal-close:hover { color: var(--text-dark); }
+    .modal-body p { margin-bottom: 1rem; color: var(--text-light); }
+    .modal-footer { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .btn-modal { padding: 0.6rem 1.2rem; }
+    .btn-secondary { background: #f1f5f9; color: var(--text-dark); }
+
+    /* Responsive */
+    @media (max-width: 1200px) { .dashboard { grid-template-columns: 280px 1fr 280px; gap: 1.5rem; } }
+    @media (max-width: 992px) { .dashboard { grid-template-columns: 1fr 1.5fr; } .panel.notifications { grid-column: 1 / -1; } }
+    @media (max-width: 768px) {
+        .dashboard { grid-template-columns: 1fr; }
+        header { padding: 0.75rem 1rem; }
+        header nav { display: none; }
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1><i class="fa-solid fa-motorcycle"></i> FoodLink</h1>
+    <nav>
+        <a href="#" class="active">Dashboard</a>
+        <a href="#" id="profile-link">Profile</a>
+        <a href="#" id="help-link">Help</a>
+        <a href="#" id="logout-link">Logout</a>
+    </nav>
+</header>
+
+<section class="dashboard">
+    <!-- Profile / Status Column -->
+    <div class="panel profile">
+        <img src="https://i.pravatar.cc/150?img=12" alt="Rider">
+        <h3>Rider Name</h3>
+        <div class="muted">Joined: Aug 2024</div>
+
+        <div class="status">
+            <div class="status-toggle">
+                <button class="active" id="btn-available">Available</button>
+                <button id="btn-unavailable">Unavailable</button>
+            </div>
+        </div>
+
+        <div class="quick-stats">
+            <div class="stat-item"><span><i class="fa-solid fa-route"></i> Trips Today</span> <b id="trips-today">6</b></div>
+            <div class="stat-item"><span><i class="fa-solid fa-wallet"></i> Earnings</span> <b id="earnings">₹540</b></div>
+            <div class="stat-item"><span><i class="fa-solid fa-star"></i> Rating</span> <b>4.8</b></div>
+        </div>
+    </div>
+
+    <!-- Orders + Map Column -->
+    <div class="orders-column">
+        <div class="panel">
+            <div class="orders-header">
+                <h2><i class="fa-solid fa-list-check"></i> Delivery Queue</h2>
+                <span class="pill" id="queue-count">0 new</span>
+            </div>
+            <div class="order-list" id="order-list"></div>
+        </div>
+        <div class="panel map-panel">
+            <h2><i class="fa-solid fa-map-location-dot"></i> Live Route Map</h2>
+            <div id="map"></div>
+            <div class="map-note">Accept an order to see the pickup location.</div>
+        </div>
+    </div>
+
+    <!-- Notifications Column -->
+    <div class="panel notifications">
+        <h2><i class="fa-solid fa-bell"></i> Notifications</h2>
+        <div id="notes">
+            <div class="note achievement">🎉 Weekly bonus unlocked: +₹200</div>
+            <div class="note achievement">🏅 50 Deliveries milestone — great work!</div>
+            <div class="note warn" id="note-traffic">🚦 Traffic alert on Ring Road — watch for delays.</div>
+        </div>
+    </div>
+</section>
+
+<footer>© 2025 FoodLink — Connecting Food, Riders & Communities</footer>
+
+<!-- Modals HTML -->
+<div class="modal-overlay" id="modal-overlay"></div>
+<div class="modal" id="profile-modal">
+    <div class="modal-header">
+        <h2><i class="fa-solid fa-user-circle"></i> Rider Profile</h2>
+        <button class="modal-close" data-modal-id="profile-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p>Here you can view your performance statistics, update personal information, and manage your vehicle details.</p>
+        <div class="quick-stats">
+            <div class="stat-item"><span>Total Deliveries</span> <b>152</b></div>
+            <div class="stat-item"><span>Acceptance Rate</span> <b>95%</b></div>
+            <div class="stat-item"><span>On-time Rate</span> <b>98%</b></div>
+            <div class="stat-item"><span>Member Since</span> <b>Aug 2024</b></div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="help-modal">
+    <div class="modal-header">
+        <h2><i class="fa-solid fa-circle-question"></i> Help & Support</h2>
+        <button class="modal-close" data-modal-id="help-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p>Have a question or need assistance? Our support team is here to help you 24/7.</p>
+        <div class="quick-stats">
+            <div class="stat-item"><span><i class="fa-solid fa-phone"></i> Call Support</span> <b>+91-123-456-7890</b></div>
+            <div class="stat-item"><span><i class="fa-solid fa-envelope"></i> Email Us</span> <b>rider-support@foodlink.com</b></div>
+            <div class="stat-item"><span><i class="fa-solid fa-book"></i> Rider Guide</span> <a>View FAQ</a></div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="logout-modal">
+    <div class="modal-header">
+        <h2><i class="fa-solid fa-right-from-bracket"></i> Confirm Logout</h2>
+        <button class="modal-close" data-modal-id="logout-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+        <p>Are you sure you want to log out? You will stop receiving new delivery requests.</p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-modal btn-secondary modal-close" data-modal-id="logout-modal">Cancel</button>
+        <button class="btn btn-modal btn-reject" style="background: var(--error-color); color: #fff;">Logout</button>
+    </div>
+</div>
+
+<!-- Beep (WebAudio) -->
+<script>
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.type = 'sine'; o.frequency.setValueAtTime(880, ctx.currentTime);
+            o.connect(g); g.connect(ctx.destination);
+            g.gain.setValueAtTime(0.0001, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
+            o.start(); o.stop(ctx.currentTime + 0.22);
+        } catch(e) { console.warn("Could not play beep", e); }
+    }
+</script>
+
+<!-- App Logic -->
+<script>
+/** ========= SERVICE WORKER (Mock Backend) ========= */
+const SW_CODE = `
+  const DB = {
+    orders: [
+      {
+        id: "FL-999",
+        pickup: { name: "Green Leaf Kitchen", lat: 28.6289, lng: 77.2065 },
+        drop: { name: "Hope Shelter", lat: 28.6448, lng: 77.2167 },
+        createdAt: Date.now() - 60000,
+        status: "pending",
+        eta: new Date(Date.now() + 15 * 60000).toISOString(),
+        otp: "1234"
+      },
+      {
+        id: "FL-998",
+        pickup: { name: "City Canteen", lat: 28.6400, lng: 77.2150 },
+        drop: { name: "Community Center", lat: 28.6011, lng: 77.2211 },
+        createdAt: Date.now() - 120000,
+        status: "pending",
+        eta: new Date(Date.now() + 25 * 60000).toISOString(),
+        otp: "5678"
+      }
+    ],
+    nextId: 1000,
+    available: true
+  };
+  const pickPool = [
+    {name:"Green Leaf Kitchen", coords:[28.6289,77.2065]}, 
+    {name:"City Canteen", coords:[28.6400,77.2150]},
+    {name:"Sunrise Banquet", coords:[28.6135,77.2380]}
+  ];
+  const dropPool = [
+    {name:"Helping Hands NGO", coords:[28.6129,77.2295]},
+    {name:"Hope Shelter", coords:[28.6448,77.2167]},
+    {name:"Community Center", coords:[28.6011,77.2211]}
+  ];
+
+  function randomOrder() {
+    const p = pickPool[Math.floor(Math.random()*pickPool.length)];
+    const d = dropPool[Math.floor(Math.random()*dropPool.length)];
+    const eta = new Date(Date.now()+ (10+Math.floor(Math.random()*20))*60000);
+    return {
+      id: "FL-" + (DB.nextId++),
+      pickup: { name: p.name, lat: p.coords[0], lng: p.coords[1] },
+      drop: { name: d.name, lat: d.coords[0], lng: d.coords[1] },
+      createdAt: Date.now(),
+      status: "pending",
+      eta: eta.toISOString(),
+      otp: String(Math.floor(1000 + Math.random() * 9000))
+    };
+  }
+
+  function maybePush() {
+    if (!DB.available) return;
+    if (Math.random() < 0.3) {
+      const o = randomOrder();
+      DB.orders.push(o);
+      self.clients.matchAll().then(clients => {
+        clients.forEach(c => c.postMessage({type:"new-order", order:o}));
+      });
+    }
+  }
+  let interval;
+  function start() { if (!interval) interval = setInterval(maybePush, 8000); }
+  function stop()  { if (interval) { clearInterval(interval); interval=null; } }
+
+  self.addEventListener('install', e => { self.skipWaiting(); });
+  self.addEventListener('activate', e => { start(); e.waitUntil(self.clients.claim()); });
+
+  self.addEventListener('message', e => {
+    const {type, value} = e.data || {};
+    if (type === 'set-availability') {
+      DB.available = !!value;
+    }
+  });
+
+  function json(data, status=200) {
+    return new Response(JSON.stringify(data), { status, headers:{'Content-Type':'application/json'} });
+  }
+
+  async function handleAPI(url, req) {
+    if (url.pathname === '/api/orders' && req.method === 'GET') {
+      return json(DB.orders);
+    }
+    if (url.pathname.startsWith('/api/order/') && url.pathname.endsWith('/accept') && req.method === 'POST') {
+      const id = url.pathname.split('/')[3];
+      const o = DB.orders.find(x=>x.id===id);
+      if (!o) return json({error:'not found'},404);
+      o.status = 'accepted';
+      return json(o);
+    }
+    if (url.pathname.startsWith('/api/order/') && url.pathname.endsWith('/reject') && req.method === 'POST') {
+      const id = url.pathname.split('/')[3];
+      const idx = DB.orders.findIndex(x=>x.id===id);
+      if (idx === -1) return json({error:'not found'},404);
+      DB.orders.splice(idx,1);
+      return json({ok:true});
+    }
+    if (url.pathname.startsWith('/api/order/') && url.pathname.endsWith('/status') && req.method === 'POST') {
+      const id = url.pathname.split('/')[3];
+      const o = DB.orders.find(x=>x.id===id);
+      if (!o) return json({error:'not found'},404);
+      const body = await req.json().catch(()=>({}));
+      o.status = body.status || o.status;
+      if (o.status === 'delivered') {
+        const idx = DB.orders.findIndex(x=>x.id===id);
+        if (idx !== -1) DB.orders.splice(idx,1);
+      }
+      return json(o);
+    }
+    return null;
+  }
+
+  self.addEventListener('fetch', e => {
+    const url = new URL(e.request.url);
+    if (url.pathname.startsWith('/api/')) {
+      e.respondWith( (async()=> {
+        const res = await handleAPI(url, e.request);
+        if (res) return res;
+        return new Response('Not Found', {status:404});
+      })() );
+    }
+  });
+`;
+
+async function registerSW() {
+    if (!('serviceWorker' in navigator)) return;
+    const swURL = URL.createObjectURL(new Blob([SW_CODE], {type:'text/javascript'}));
+    try {
+        await navigator.serviceWorker.register(swURL, { scope: './' });
+        navigator.serviceWorker.ready.then(() => {
+            navigator.serviceWorker.controller?.postMessage({type:'set-availability', value:true});
+        });
+    } catch(e) {
+        console.warn('SW registration failed', e);
+    }
+}
+registerSW();
+
+/** ============== UI + FRONTEND ============== */
+const orderListEl = document.getElementById('order-list');
+const queueCountEl = document.getElementById('queue-count');
+const notesEl = document.getElementById('notes');
+const tripsEl = document.getElementById('trips-today');
+const earningsEl = document.getElementById('earnings');
+const btnAvailable = document.getElementById('btn-available');
+const btnUnavailable = document.getElementById('btn-unavailable');
+
+let riderAvailable = true;
+let activeOrderId = null;
+
+navigator.serviceWorker?.addEventListener('message', (e) => {
+    const msg = e.data || {};
+    if (msg.type === 'new-order' && riderAvailable) {
+        addOrderCard(msg.order);
+        pushOrderNote(`✅ New delivery: ${msg.order.pickup.name} → ${msg.order.drop.name}`);
+        playBeep();
+    }
+});
+
+function pushOrderNote(text, type = 'order') {
+    const div = document.createElement('div');
+    div.className = `note ${type}`;
+    div.textContent = text;
+    notesEl.prepend(div);
+}
+
+function clearOrderNotesKeepAchievements() {
+    [...notesEl.querySelectorAll('.note.order')].forEach(n => n.remove());
+}
+
+function fmtTime(iso) {
+    try { return new Date(iso).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
+    catch(e){ return '—'; }
+}
+
+function updateQueueCount() {
+    const count = orderListEl.children.length;
+    queueCountEl.textContent = `${count} new`;
+    queueCountEl.style.display = count > 0 ? '' : 'none';
+}
+
+function addOrderCard(order) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = `order-${order.id}`;
+    card.dataset.id = order.id;
+    card.dataset.otp = order.otp;
+
+    card.innerHTML = `
+        <div class="row"><span class="icon"><i class="fa-solid fa-utensils"></i></span> <span class="pickup">${order.pickup.name}</span></div>
+        <div class="row"><span class="icon"><i class="fa-solid fa-house-chimney"></i></span> <span class="dropoff">${order.drop.name}</span></div>
+        <div class="meta">ETA: <b>${fmtTime(order.eta)}</b> • ID: <span class="tag">${order.id}</span></div>
+        <div class="stage">Status: Pending</div>
+        <div class="smart-tip-container"></div>
+        <div class="btns">
+            <!-- Step 1: Accept/Reject -->
+            <div class="btn-group-step1">
+                <button class="btn btn-smart-tip">✨ Get Smart Tip</button>
+                <button class="btn btn-accept" style="margin-top: 0.5rem;">Accept</button>
+                <button class="btn btn-reject" style="margin-top: 0.5rem;">Reject</button>
+            </div>
+            <!-- Step 2: Pickup -->
+            <button class="btn btn-pickup" hidden>Confirm Food Pickup</button>
+            <!-- Step 3: Start Ride -->
+            <button class="btn btn-start" hidden>Start Ride to Customer</button>
+            <!-- Step 4: Complete -->
+            <div class="otp-section" hidden>
+                <label class="otp-label">Enter 4-Digit OTP from Customer</label>
+                <input type="tel" class="otp-input" maxlength="4" placeholder="----">
+                <div class="otp-error"></div>
+                <button class="btn btn-complete" style="margin-top: 0.5rem;">Verify & Complete</button>
+            </div>
+        </div>
+        <span class="coords" data-plat="${order.pickup.lat}" data-plng="${order.pickup.lng}" data-dlat="${order.drop.lat}" data-dlng="${order.drop.lng}" hidden></span>
+    `;
+
+    const stage = card.querySelector('.stage');
+    const btnGroupStep1 = card.querySelector('.btn-group-step1');
+    const btnAccept = card.querySelector('.btn-accept');
+    const btnReject = card.querySelector('.btn-reject');
+    const btnPickup = card.querySelector('.btn-pickup');
+    const btnStart = card.querySelector('.btn-start');
+    const otpSection = card.querySelector('.otp-section');
+    const otpInput = card.querySelector('.otp-input');
+    const otpError = card.querySelector('.otp-error');
+    const btnComplete = card.querySelector('.btn-complete');
+    const btnSmartTip = card.querySelector('.btn-smart-tip');
+    const smartTipContainer = card.querySelector('.smart-tip-container');
+
+    // Action: Get Smart Tip (Gemini API Call)
+    btnSmartTip.addEventListener('click', async () => {
+        btnSmartTip.classList.add('loading');
+        btnSmartTip.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Getting tip...`;
+        btnSmartTip.disabled = true;
+
+        const pickupName = order.pickup.name;
+        const dropoffName = order.drop.name;
+        const currentTime = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+        const prompt = `You are a dispatch assistant for a food delivery rider in Vadodara, India. A new order is from "${pickupName}" to "${dropoffName}". It's currently ${currentTime}. Provide a brief, helpful tip for the rider on a bike. Mention potential traffic, a key landmark, or a useful shortcut. Keep it under 25 words.`;
+
+        try {
+            const tip = await generateTextWithGemini(prompt);
+            smartTipContainer.innerHTML = `<div class="smart-tip-display"><i class="fa-solid fa-lightbulb"></i> ${tip}</div>`;
+            btnSmartTip.style.display = 'none'; // Hide after use
+        } catch (error) {
+            console.error('Gemini API call failed', error);
+            smartTipContainer.innerHTML = `<div class="smart-tip-display"><i class="fa-solid fa-triangle-exclamation"></i> Could not get a tip. Please rely on the map.</div>`;
+            btnSmartTip.classList.remove('loading');
+            btnSmartTip.innerHTML = `✨ Get Smart Tip`;
+            btnSmartTip.disabled = false;
+        }
+    });
+
+    // Action: Accept
+    btnAccept.addEventListener('click', async () => {
+        if (activeOrderId && activeOrderId !== order.id) {
+            pushOrderNote("Complete your active order first.", 'warn');
+            return;
+        }
+        await fetch(`/api/order/${order.id}/accept`, {method:'POST'});
+        activeOrderId = order.id;
+        stage.textContent = 'Status: Accepted, head to pickup';
+        btnGroupStep1.hidden = true;
+        btnPickup.hidden = false;
+        const coordsEl = card.querySelector('.coords');
+        startRouteTo(parseFloat(coordsEl.dataset.plat), parseFloat(coordsEl.dataset.plng), "Pickup Location");
+    });
+
+    // Action: Reject
+    btnReject.addEventListener('click', async () => {
+        card.remove();
+        updateQueueCount();
+        pushOrderNote(`❌ Rejected ${order.id}`);
+        await fetch(`/api/order/${order.id}/reject`, {method:'POST'});
+    });
+
+    // Action: Confirm Pickup
+    btnPickup.addEventListener('click', async () => {
+        stage.textContent = 'Status: Food Picked Up';
+        btnPickup.hidden = true;
+        btnStart.hidden = false;
+        await fetch(`/api/order/${order.id}/status`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({status:'picked_up'})
+        });
+    });
+
+    // Action: Start Ride
+    btnStart.addEventListener('click', async () => {
+        stage.textContent = 'Status: In Transit to Customer 🚴';
+        btnStart.hidden = true;
+        otpSection.hidden = false;
+        const coordsEl = card.querySelector('.coords');
+        startRouteTo(parseFloat(coordsEl.dataset.dlat), parseFloat(coordsEl.dataset.dlng), "Dropoff Location");
+        await fetch(`/api/order/${order.id}/status`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({status:'in_transit'})
+        });
+    });
+
+    // Action: Complete (Verify OTP)
+    btnComplete.addEventListener('click', async () => {
+        if (otpInput.value !== card.dataset.otp) {
+            otpError.textContent = 'Invalid OTP. Please try again.';
+            otpInput.style.borderColor = 'var(--error-color)';
+            return;
+        }
+        otpError.textContent = '';
+        otpInput.style.borderColor = 'var(--success-color)';
+        stage.textContent = 'Status: Delivered 🎉';
+        otpSection.style.display = 'none';
+
+        await fetch(`/api/order/${order.id}/status`, {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({status:'delivered'})
+        });
+        setTimeout(()=> { card.remove(); updateQueueCount(); }, 1200);
+        
+        pushOrderNote('🎉 Great job! Delivery completed. +₹50 bonus.', 'achievement');
+        tripsEl.textContent = (parseInt(tripsEl.textContent,10)+1).toString();
+        const current = parseInt(earningsEl.textContent.replace(/[^\d]/g,''),10) || 0;
+        earningsEl.textContent = '₹' + (current + 50);
+        clearRoute();
+        activeOrderId = null;
+    });
+
+    orderListEl.prepend(card);
+    updateQueueCount();
+}
+
+async function hydrate() {
+    try {
+        const res = await fetch('/api/orders');
+        if (!res.ok) return;
+        const data = await res.json();
+        orderListEl.innerHTML = '';
+        data.forEach(addOrderCard);
+    } catch(e) { console.warn("Hydration failed", e); }
+}
+
+document.addEventListener('DOMContentLoaded', hydrate);
+
+btnAvailable.addEventListener('click', () => {
+    riderAvailable = true;
+    btnAvailable.classList.add('active');
+    btnUnavailable.classList.remove('active');
+    navigator.serviceWorker.controller?.postMessage({type:'set-availability', value:true});
+    hydrate();
+});
+
+btnUnavailable.addEventListener('click', () => {
+    if (activeOrderId) {
+        pushOrderNote("Please complete your active delivery before going offline.", 'warn');
+        return;
+    }
+    riderAvailable = false;
+    btnUnavailable.classList.add('active');
+    btnAvailable.classList.remove('active');
+    navigator.serviceWorker.controller?.postMessage({type:'set-availability', value:false});
+    orderListEl.innerHTML = '';
+    updateQueueCount();
+    clearRoute();
+    clearOrderNotesKeepAchievements();
+});
+
+/** ============== MODAL LOGIC ============== */
+const modalOverlay = document.getElementById('modal-overlay');
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modalOverlay.classList.add('active');
+    modal.classList.add('active');
+    setTimeout(() => {
+        modalOverlay.classList.add('visible');
+        modal.classList.add('visible');
+    }, 10);
+}
+function closeModal() {
+    const activeModal = document.querySelector('.modal.active');
+    if (activeModal) {
+        activeModal.classList.remove('visible');
+        modalOverlay.classList.remove('visible');
+        setTimeout(() => {
+            activeModal.classList.remove('active');
+            modalOverlay.classList.remove('active');
+        }, 300);
+    }
+}
+document.getElementById('profile-link').addEventListener('click', (e) => { e.preventDefault(); openModal('profile-modal'); });
+document.getElementById('help-link').addEventListener('click', (e) => { e.preventDefault(); openModal('help-modal'); });
+document.getElementById('logout-link').addEventListener('click', (e) => { e.preventDefault(); openModal('logout-modal'); });
+document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeModal));
+modalOverlay.addEventListener('click', closeModal);
+
+/** ============== GEMINI API CALL ============== */
+async function generateTextWithGemini(prompt, retries = 3, delay = 1000) {
+    // NOTE: This uses a pass-through for the API key.
+    // In a real production environment, you would handle this server-side.
+    const apiKey = ""; // Leave blank, handled by the environment
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+    const payload = {
+        contents: [{
+            parts: [{ text: prompt }]
+        }]
+    };
+
+    for (let i = 0; i < retries; i++) {
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                return result.candidates[0].content.parts[0].text;
+            } else {
+                // Handle cases where the response structure is unexpected
+                throw new Error("Invalid response structure from Gemini API");
+            }
+
+        } catch (error) {
+            console.warn(`API call attempt ${i + 1} failed. Retrying in ${delay}ms...`, error);
+            if (i === retries - 1) throw error; // Throw error on last attempt
+            await new Promise(res => setTimeout(res, delay));
+            delay *= 2; // Exponential backoff
+        }
+    }
+    throw new Error("Gemini API call failed after multiple retries.");
+}
+
+
+/** ============== MAP + ROUTING ============== */
+let map, tile, riderMarker, dropMarker, routeLine;
+function initMap() {
+    map = L.map('map', { zoomControl: true });
+    tile = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    map.setView([28.6139, 77.2090], 12); // Delhi as default
+}
+initMap();
+
+function clearRoute() {
+    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    if (riderMarker) { map.removeLayer(riderMarker); riderMarker = null; }
+    if (dropMarker) { map.removeLayer(dropMarker); dropMarker = null; }
+}
+
+async function startRouteTo(destLat, destLng, destLabel = "Destination") {
+    if (!navigator.geolocation) {
+        pushOrderNote("Geolocation not supported.", 'warn');
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+        const currLat = pos.coords.latitude;
+        const currLng = pos.coords.longitude;
+
+        clearRoute();
+        riderMarker = L.marker([currLat, currLng]).addTo(map).bindPopup('You are here');
+        dropMarker  = L.marker([destLat, destLng]).addTo(map).bindPopup(destLabel);
+
+        try {
+            const url = `https://router.project-osrm.org/route/v1/driving/${currLng},${currLat};${destLng},${destLat}?overview=full&geometries=geojson`;
+            const resp = await fetch(url);
+            const data = await resp.json();
+            if (data?.routes?.[0]) {
+                const coords = data.routes[0].geometry.coordinates.map(([lng,lat])=>[lat,lng]);
+                routeLine = L.polyline(coords, { weight: 5, color: 'var(--primary-color)' }).addTo(map);
+                map.fitBounds(routeLine.getBounds(), { padding:[30,30] });
+            } else {
+                map.fitBounds(L.featureGroup([riderMarker, dropMarker]).getBounds(), { padding:[30,30] });
+            }
+        } catch(e) {
+            console.error("Routing failed", e);
+            map.fitBounds(L.featureGroup([riderMarker, dropMarker]).getBounds(), { padding:[30,30] });
+        }
+    }, (err) => {
+        pushOrderNote("Please allow location access to plot your route.", 'warn');
+    }, { enableHighAccuracy:true, timeout:10000 });
+}
+</script>
+
+</body>
+</html>
