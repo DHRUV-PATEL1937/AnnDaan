@@ -28,7 +28,8 @@ class NeumorphismSignupForm {
         this.serverErrorMessage.id = 'serverErrorMessage';
         this.form.insertBefore(this.serverErrorMessage, this.submitButton.nextSibling); 
         
-        this.userEmailForVerification = null; // To store email for OTP step
+        // ⭐ NEW: To store the temporary token from the server
+        this.registrationToken = null; 
         this.init();
     }
     
@@ -238,8 +239,8 @@ class NeumorphismSignupForm {
             const data = await response.json();
 
             if (response.ok) {
-                console.log('Initial signup successful:', data);
-                this.userEmailForVerification = email;
+                // ⭐ STORE THE TEMPORARY TOKEN
+                this.registrationToken = data.registrationToken;
                 this.mainContainer.style.display = 'none';
                 this.otpContainer.style.display = 'block';
             } else {
@@ -265,16 +266,25 @@ class NeumorphismSignupForm {
         this.setLoading(true, this.otpForm.querySelector('button'));
 
         try {
+            // ⭐ SEND THE OTP AND THE TEMPORARY TOKEN
             const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: this.userEmailForVerification, otp: otp })
+                body: JSON.stringify({ 
+                    otp: otp,
+                    registrationToken: this.registrationToken 
+                })
             });
 
             const data = await response.json();
 
             if (response.ok) {
                 console.log('OTP verification successful:', data);
+                // Store final user data in localStorage for automatic login
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('userName', data.user.name);
+                
                 this.otpContainer.style.display = 'none';
                 this.showNeumorphicSuccess();
             } else {
@@ -302,8 +312,8 @@ class NeumorphismSignupForm {
         successIcon.style.animation = 'successPulse 0.6s ease-out';
         
         setTimeout(() => {
-            console.log('Redirecting to login page...');
-            window.location.href = 'login.html';
+            console.log('Redirecting to dashboard page...');
+            window.location.href = 'dashboard.html';
         }, 2500);
     }
 }
@@ -318,7 +328,6 @@ if (!document.querySelector('#neu-keyframes')) {
     document.head.appendChild(style);
 }
 
-// ⭐ UPDATED with error handling
 document.addEventListener('DOMContentLoaded', () => {
     try {
         new NeumorphismSignupForm();

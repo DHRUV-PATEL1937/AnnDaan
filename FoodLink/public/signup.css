@@ -2,12 +2,18 @@
 
 /* Basic styles are now handled by inline CSS in the HTML */
 
+html {
+    overflow-x: hidden;
+}
+
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     padding-top: 80px;
     background-color: #f8f9fa;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 /* Navbar styles */
@@ -72,9 +78,13 @@ body {
     transition: all 0.3s ease;
 }
 
-.signup-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+.signup-card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    position: relative;
+    transition: all 0.3s ease;
 }
 
 .signup-header {
@@ -212,16 +222,21 @@ body {
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    background: transparent;
+    background: var(--accent-2);
     border: none;
-    width: 24px;
-    height: 24px;
+    width: 35px;
+    height: 35px;
+    border-radius: 10px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--muted);
+    box-shadow: 
+        4px 4px 10px #bec3cf,
+        -4px -4px 10px #ffffff;
     transition: all 0.3s ease;
+    outline: none;
     z-index: 1;
 }
 
@@ -230,7 +245,9 @@ body {
 }
 
 .password-toggle:active {
-    transform: translateY(-50%) scale(0.95);
+    box-shadow: 
+        inset 2px 2px 5px #bec3cf,
+        inset -2px -2px 5px #ffffff;
 }
 
 .password-toggle svg {
@@ -238,20 +255,30 @@ body {
     height: 100%;
 }
 
+.eye-open, .eye-closed {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    transition: opacity 0.2s ease;
+}
+
 .eye-open {
-    display: none;
+    opacity: 0;
 }
 
 .eye-closed {
-    display: block;
+    opacity: 1;
 }
 
 input[type="text"] ~ .password-toggle .eye-open {
-    display: block;
+    opacity: 1;
 }
 
 input[type="text"] ~ .password-toggle .eye-closed {
-    display: none;
+    opacity: 0;
 }
 
 /* Button styling is now handled by the .btn class in the inline CSS */
@@ -366,10 +393,14 @@ input[type="text"] ~ .password-toggle .eye-closed {
     transform: translateX(150%);
     transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
     z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
 }
 
-.success-message.active {
+.success-message.show {
     transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
 }
 
 .success-icon {

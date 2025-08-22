@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const logoutLink = document.getElementById('logout-link');
     const donorNameInput = document.getElementById('donorName');
     
+    // Check login status immediately when page loads
+    checkLoginStatus();
+    
     // Donation button in hero section
     const donateNowBtns = document.querySelectorAll('.btn');
     donateNowBtns.forEach(btn => {
@@ -113,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isSilent) {
             alert("You have been logged out.");
         }
-        window.location.href = 'login.html';
+        window.location.href = 'dashboard.html';
     }
 
     if (logoutLink) {

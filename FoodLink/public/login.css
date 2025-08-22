@@ -3,11 +3,17 @@
 /* Note: Basic styles are now in the inline CSS in the HTML file */
 
 /* Login specific styles */
+html {
+    overflow-x: hidden;
+}
+
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     padding-bottom: 40px;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 .login-container {
@@ -19,11 +25,15 @@ body {
 
 .login-card {
     background: #ffffff;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-lg);
     padding: 40px 30px;
-    box-shadow: var(--shadow-1);
+    box-shadow: var(--shadow-2);
     position: relative;
-    transition: all 0.3s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+    /* ⭐ CHANGES START HERE ⭐ */
+    transition: all 0.5s ease-in-out;
+    overflow: hidden; 
+    /* ⭐ CHANGES END HERE ⭐ */
 }
 
 .login-card:hover {
@@ -178,6 +188,7 @@ body {
         4px 4px 10px #bec3cf,
         -4px -4px 10px #ffffff;
     transition: all 0.3s ease;
+    outline: none;
 }
 
 .password-toggle:hover {
@@ -195,16 +206,26 @@ body {
     height: 18px;
 }
 
+.eye-open, .eye-closed {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 18px;
+    height: 18px;
+    transition: opacity 0.2s ease;
+}
+
 .eye-closed {
-    display: none;
+    opacity: 0;
 }
 
 .password-toggle.show .eye-open {
-    display: none;
+    opacity: 0;
 }
 
 .password-toggle.show .eye-closed {
-    display: block;
+    opacity: 1;
 }
 
 /* Form Options */
@@ -338,9 +359,12 @@ body {
     align-items: center;
     margin: 24px 0;
     gap: 16px;
+    position: relative;
+    text-align: center;
 }
 
-.divider-line {
+.divider:before, .divider:after {
+    content: "";
     flex: 1;
     height: 1px;
     background: rgba(0,0,0,0.1);
@@ -350,17 +374,22 @@ body {
     color: var(--muted);
     font-size: 14px;
     font-weight: 400;
+    padding: 0 10px;
 }
 
-/* Social Login */
-.social-login {
+/* Google Sign-in */
+.google-signin {
+    margin: 20px 0;
     display: flex;
     justify-content: center;
-    gap: 16px;
-    margin-bottom: 24px;
 }
 
-/* Google sign-in button is handled by Google's library */
+/* Ensure the Google button is centered and properly sized */
+.g_id_signin {
+    margin: 0 auto;
+    width: 100%;
+    max-width: 300px;
+}
 
 /* Signup Link */
 .signup-link {
@@ -405,170 +434,86 @@ body {
         0 0 0 2px #ff3b5c;
 }
 
-/* Success Message */
+/* --- Success Message / Redirect Screen --- */
 .success-message {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    position: absolute; /* Lays it on top of the card space */
+    top: 0; left: 0; right: 0; bottom: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    transform: translateX(150%);
-    transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-    z-index: 1000;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    opacity: 0; /* Hidden by default */
+    visibility: hidden;
+    /* Slower fade-in with a delay */
+    transition: opacity 0.6s 0.4s ease-in-out, visibility 0s 1s; 
 }
 
-.success-message.active {
-    transform: translateX(0);
+.success-message.show {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.6s 0.4s ease-in-out, visibility 0s 0.4s;
 }
 
 .success-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--brand);
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 15px;
+    background-color: var(--accent-2);
+    margin-bottom: 24px;
 }
 
+/* Checkmark Animation with a delay */
 .success-icon svg {
-    width: 24px;
-    height: 24px;
-    color: #ffffff;
+    width: 40px;
+    height: 40px;
+    color: var(--brand);
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: drawCheck 0.8s 0.8s ease-in-out forwards; 
 }
 
-.success-content h4 {
+@keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
+}
+
+.success-message h3 {
     color: var(--text);
-    font-size: 18px;
-    margin-bottom: 5px;
+    font-size: 1.8rem;
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 8px;
 }
 
-.success-content p {
+.success-message p {
     color: var(--muted);
-    font-size: 14px;
-    margin: 0;
+    font-size: 1rem;
+    margin-bottom: 24px;
 }
 
-/* Mobile Responsive */
-@media (max-width: 992px) {
-    .login-container {
-        padding: 20px;
-    }
+/* Slower Redirect Progress Bar */
+.redirect-loader {
+    width: 100%;
+    height: 6px;
+    background-color: var(--accent-2);
+    border-radius: 3px;
+    overflow: hidden;
 }
 
-@media (max-width: 768px) {
-    .login-container {
-        padding: 16px;
-    }
-    
-    .login-card {
-        padding: 24px 20px;
-    }
-    
-    .form-options {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .forgot-link {
-        margin-top: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        padding: 16px;
-    }
-    
-    .login-card {
-        padding: 20px 16px;
-        border-radius: 20px;
-    }
-    
-    .login-header h2 {
-        font-size: 24px;
-    }
-    
-    .neu-input input {
-        padding: 18px 20px;
-        padding-left: 50px;
-    }
-    
-    .neu-input label {
-        left: 50px;
-    }
-    
-    .form-options {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-    }
-}
-
-/* --- Styles for Username Modal (Added at the end) --- */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
+.redirect-loader::before {
+    content: '';
+    display: block;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    backdrop-filter: blur(5px);
+    background: var(--grad);
+    border-radius: 3px;
+    transform: translateX(-100%);
+    animation: countdown 3s 0.5s linear forwards; /* Slower animation with a delay */
 }
 
-.modal-content {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    transform: scale(0.9);
-    transition: transform 0.3s ease;
-}
-
-.modal-overlay.visible {
-    opacity: 1;
-}
-
-.modal-overlay.visible .modal-content {
-    transform: scale(1);
-}
-
-.modal-content h3 {
-    color: var(--text);
-    font-size: 1.75rem;
-    margin-bottom: 15px;
-}
-
-.modal-content p {
-    color: var(--muted);
-    margin-bottom: 30px;
-}
-
-/* Re-use existing form styles within the modal */
-.modal-content .form-group {
-    text-align: left;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.modal-actions button {
-    flex: 1;
+@keyframes countdown {
+    to { transform: translateX(0%); }
 }

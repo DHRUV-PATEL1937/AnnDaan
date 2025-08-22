@@ -19,6 +19,7 @@
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
@@ -27,6 +28,8 @@ body {
     color: var(--text-dark);
     margin: 0;
     line-height: 1.6;
+    overflow-x: hidden;
+    width: 100%;
 }
 
 .container {

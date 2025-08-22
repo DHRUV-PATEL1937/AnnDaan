@@ -2,7 +2,8 @@
 class NeumorphismLoginForm {
     constructor() {
         this.form = document.getElementById('loginForm');
-        this.emailInput = document.getElementById('email');
+        // FIX: Changed from usernameInput to emailInput to match the HTML
+        this.emailInput = document.getElementById('email'); 
         this.passwordInput = document.getElementById('password');
         this.passwordToggle = document.getElementById('passwordToggle');
         this.submitButton = this.form.querySelector('.login-btn');
@@ -34,7 +35,8 @@ class NeumorphismLoginForm {
     
     bindEvents() {
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-        this.emailInput.addEventListener('blur', () => this.validateEmail());
+        // FIX: Changed from usernameInput to emailInput
+        this.emailInput.addEventListener('blur', () => this.validateEmail()); 
         this.passwordInput.addEventListener('blur', () => this.validatePassword());
         this.emailInput.addEventListener('input', () => this.clearError('email'));
         this.passwordInput.addEventListener('input', () => this.clearError('password'));
@@ -42,6 +44,7 @@ class NeumorphismLoginForm {
         this.usernameForm.addEventListener('submit', (e) => this.handleUsernameSubmit(e));
         this.modalUsernameInput.addEventListener('input', () => this.clearModalError());
         
+        // FIX: Changed from usernameInput to emailInput
         [this.emailInput, this.passwordInput].forEach(input => {
             input.addEventListener('focus', (e) => this.addSoftPress(e));
             input.addEventListener('blur', (e) => this.removeSoftPress(e));
@@ -107,6 +110,7 @@ class NeumorphismLoginForm {
         }, 150);
     }
     
+    // FIX: Re-added validateEmail to match the HTML form
     validateEmail() {
         const email = this.emailInput.value.trim();
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -180,6 +184,7 @@ class NeumorphismLoginForm {
         e.preventDefault();
         this.clearServerError();
 
+        // FIX: Changed to validateEmail
         if (!this.validateEmail() || !this.validatePassword()) {
             this.animateSoftPress(this.submitButton);
             this.showServerError('Please fix the errors before submitting.');
@@ -187,23 +192,23 @@ class NeumorphismLoginForm {
         }
         
         this.setLoading(true);
-        const email = this.emailInput.value.trim();
+        const email = this.emailInput.value.trim(); // FIX: Use email
         const password = this.passwordInput.value;
 
         try {
             const response = await fetch('http://localhost:5000/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password }) // FIX: Send email
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // ✅ FIX: Use the correct key 'appToken'
-                localStorage.setItem('appToken', data.accessToken);
+                // ✅ FIX: Use the correct keys 'accessToken' and 'refreshToken'
+                localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('userName', data.user.name); // Store name for welcome message
+                localStorage.setItem('userName', data.user.name);
 
                 this.showNeumorphicSuccess();
             } else {
@@ -235,10 +240,10 @@ class NeumorphismLoginForm {
                 this.tempToken = data.tempToken;
                 this.showUsernameModal();
             } else if (res.ok) {
-                // ✅ FIX: Use the correct key 'appToken'
-                localStorage.setItem('appToken', data.accessToken);
+                // ✅ FIX: Use the correct keys 'accessToken' and 'refreshToken'
+                localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('userName', data.user.name); // Store name for welcome message
+                localStorage.setItem('userName', data.user.name);
 
                 this.showNeumorphicSuccess();
             } else {
@@ -297,10 +302,10 @@ class NeumorphismLoginForm {
             const data = await response.json();
 
             if (response.ok) {
-                // ✅ FIX: Use the correct key 'appToken'
-                localStorage.setItem('appToken', data.accessToken);
+                // ✅ FIX: Use the correct keys 'accessToken' and 'refreshToken'
+                localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('userName', data.user.name); // Store name for welcome message
+                localStorage.setItem('userName', data.user.name);
 
                 this.usernameModal.style.display = 'none';
                 this.usernameModal.classList.remove('visible');
@@ -326,27 +331,44 @@ class NeumorphismLoginForm {
     }
     
     showNeumorphicSuccess() {
-        this.form.style.transform = 'scale(0.95)';
-        this.form.style.opacity = '0';
+    const loginCard = document.querySelector('.login-card');
+    const formElements = [
+        this.form,
+        document.querySelector('.login-header'),
+        document.querySelector('.divider'),
+        document.querySelector('.google-signin'),
+        document.querySelector('.signup-link')
+    ];
+
+    // ⭐ NEW: Set a fixed height to prevent the card from collapsing
+    const cardHeight = loginCard.offsetHeight;
+    loginCard.style.height = `${cardHeight}px`;
+
+    // 1. Fade out all form elements
+    formElements.forEach(el => {
+        if (el) {
+            el.style.transition = 'opacity 0.4s ease-out';
+            el.style.opacity = '0';
+        }
+    });
+
+    // 2. After fade-out, hide them and show the success message
+    setTimeout(() => {
+        formElements.forEach(el => {
+            if (el) el.style.display = 'none';
+        });
         
-        setTimeout(() => {
-            this.form.style.display = 'none';
-            document.querySelector('.social-login').style.display = 'none';
-            document.querySelector('.signup-link').style.display = 'none';
-            
-            this.successMessage.classList.add('show');
-            
-            const successIcon = this.successMessage.querySelector('.neu-icon');
-            successIcon.style.animation = 'successPulse 0.6s ease-out';
-            
-        }, 300);
+        // Show the success message
+        this.successMessage.classList.add('show');
         
-        setTimeout(() => {
-            console.log('Redirecting to dashboard...');
-            // Use a relative path for redirection
-            window.location.href = './dashboard.html';
-        }, 2500);
-    }
+    }, 400); // This delay should match the CSS fade-out duration
+    
+    // 3. Redirect after the full animation has played out
+    setTimeout(() => {
+        console.log('Redirecting to dashboard...');
+        window.location.href = 'dashboard.html';
+    }, 3500); // ⭐ NEW: Increased total delay for a slower feel
+}
 }
 
 window.handleCredentialResponse = (response) => {

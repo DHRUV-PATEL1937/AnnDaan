@@ -87,52 +87,31 @@ app.get("/", (req, res) => {
 });
 
 
-// --- Traditional Email/Password Signup Route (UPDATED) ---
+// --- Traditional Email/Password Signup Route (UPDATED FOR TEMP TOKEN FLOW) ---
 app.post("/signup", async (req, res) => {
     try {
         const { name, username, email, password } = req.body;
 
-        if (!name || !username || !email || !password) {
-            return res.status(400).json({ message: 'All fields are required.' });
+        if (!name || !username || !email || !password || password.length < 6) {
+            return res.status(400).json({ message: 'All fields are required and password must be at least 6 characters.' });
         }
-        // ... (keep other validations for password and username length)
-
-        const existingUser = await User.findOne({ $or: [{ email: email }, { username: username }] });
         
-        if (existingUser && existingUser.isEmailVerified) {
-            // If a verified user exists, reject the signup
+        // Check if a VERIFIED user already exists
+        const existingUser = await User.findOne({ 
+            $or: [{ email: email }, { username: username }],
+            isEmailVerified: true 
+        });
+        
+        if (existingUser) {
             return res.status(409).json({ message: 'An account with this email or username already exists.' });
         }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiry = Date.now() + 600000; // 10 minutes from now
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        let user;
-        if (existingUser && !existingUser.isEmailVerified) {
-            // If an unverified user exists, update them with the new details and a new OTP
-            user = existingUser;
-            user.name = name;
-            user.username = username;
-            user.password = hashedPassword;
-            user.emailVerificationToken = otp;
-            user.emailVerificationExpires = expiry;
-            console.log(`✅ Resending OTP for unverified user: ${email}`);
-        } else {
-            // Create a new, unverified user
-            user = new User({
-                name,
-                username,
-                email,
-                password: hashedPassword,
-                emailVerificationToken: otp,
-                emailVerificationExpires: expiry,
-                isEmailVerified: false
-            });
-            console.log(`✅ Created new unverified user: ${email}`);
-        }
-
-        await user.save();
+        // --- Create a temporary registration token instead of saving the user ---
+        const registrationPayload = { name, username, email, password: hashedPassword, otp };
+        const registrationToken = jwt.sign(registrationPayload, JWT_SECRET, { expiresIn: '15m' });
 
         // Send the OTP email
         const transporter = nodemailer.createTransport({
@@ -141,16 +120,20 @@ app.post("/signup", async (req, res) => {
         });
 
         const mailOptions = {
-            to: user.email,
-            from: `AnnDan <${EMAIL_USER}>`,
-            subject: "Verify Your Email Address",
-            html: `<p>Your One-Time Password (OTP) for email verification is: <strong>${otp}</strong>. It will expire in 10 minutes.</p>`,
+            to: email,
+            from: `FoodLink <${EMAIL_USER}>`,
+            subject: "Verify Your Email Address for FoodLink",
+            html: `<p>Your One-Time Password (OTP) for email verification is: <strong>${otp}</strong>. It will expire in 15 minutes.</p>`,
         };
 
         await transporter.sendMail(mailOptions);
-        console.log(`✅ Verification OTP sent to: ${user.email}`);
+        console.log(`✅ Verification OTP sent to: ${email}`);
         
-        res.status(200).json({ message: 'A verification OTP has been sent to your email.' });
+        // --- Send the temporary token back to the client ---
+        res.status(200).json({ 
+            message: 'A verification OTP has been sent to your email.',
+            registrationToken: registrationToken // This token holds the user's data temporarily
+        });
 
     } catch (error) {
         console.error("❌ Signup error:", error);
@@ -158,32 +141,61 @@ app.post("/signup", async (req, res) => {
     }
 });
 
-// ⭐ NEW: Endpoint to verify the OTP
+// --- Verify OTP and Complete Registration (UPDATED FOR TEMP TOKEN FLOW) ---
 app.post("/api/auth/verify-otp", async (req, res) => {
     try {
-        const { email, otp } = req.body;
-        if (!email || !otp) {
-            return res.status(400).json({ message: "Email and OTP are required." });
+        const { otp, registrationToken } = req.body;
+        if (!otp || !registrationToken) {
+            return res.status(400).json({ message: "OTP and registration token are required." });
         }
 
-        const user = await User.findOne({ 
-            email: email,
-            emailVerificationToken: otp,
-            emailVerificationExpires: { $gt: Date.now() } // Check if token is not expired
+        // Verify the temporary token
+        let decodedPayload;
+        try {
+            decodedPayload = jwt.verify(registrationToken, JWT_SECRET);
+        } catch (error) {
+            return res.status(400).json({ message: "The verification link is invalid or has expired. Please sign up again." });
+        }
+        
+        // Check if the provided OTP matches the one in the token
+        if (decodedPayload.otp !== otp) {
+            return res.status(400).json({ message: "The OTP is incorrect." });
+        }
+
+        const { name, username, email, password } = decodedPayload;
+        
+        // Final check to ensure no verified user was created in the meantime
+        const existingUser = await User.findOne({ $or: [{ email: email }, { username: username }], isEmailVerified: true });
+        if (existingUser) {
+            return res.status(409).json({ message: 'An account with this email or username already exists.' });
+        }
+
+        // --- Create and save the user to the database NOW ---
+        const newUser = new User({
+            name,
+            username,
+            email,
+            password,
+            isEmailVerified: true,
+            lastLoginAt: Date.now()
         });
 
-        if (!user) {
-            return res.status(400).json({ message: "Invalid OTP or it has expired. Please try signing up again." });
-        }
+        // Generate final login tokens
+        const accessToken = jwt.sign({ id: newUser._id, name: newUser.name, email: newUser.email }, JWT_SECRET, { expiresIn: '15m' });
+        const refreshToken = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
+        
+        newUser.refreshToken = refreshToken;
+        await newUser.save();
 
-        // Verification successful
-        user.isEmailVerified = true;
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpires = undefined;
-        await user.save();
+        console.log(`✅ User registered and verified successfully: ${email}`);
 
-        console.log(`✅ Email verified successfully for: ${user.email}`);
-        res.status(200).json({ message: "Email verified successfully! You can now log in." });
+        // Send back final tokens to log the user in
+        res.status(201).json({
+            message: "Account verified and created successfully!",
+            accessToken,
+            refreshToken,
+            user: { id: newUser._id, name: newUser.name }
+        });
 
     } catch (error) {
         console.error("❌ OTP verification error:", error);
