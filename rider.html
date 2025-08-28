@@ -430,6 +430,111 @@
 
 <!-- App Logic -->
 <script>
+/** ============== AUTHENTICATION LOGIC ============== */
+const API_BASE = 'http://localhost:5000';
+let currentUser = null;
+let authToken = null;
+
+// Check authentication on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuthentication();
+    await loadRiderDashboard();
+    await registerSW();
+    hydrate();
+});
+
+async function checkAuthentication() {
+    authToken = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!authToken || !userData) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    try {
+        currentUser = JSON.parse(userData);
+        
+        // Verify user role
+        if (currentUser.role !== 'rider') {
+            alert('Access denied. This page is for riders only.');
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Update UI with user info
+        updateUserInfo();
+        
+    } catch (error) {
+        console.error('Authentication error:', error);
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+}
+
+function updateUserInfo() {
+    // Update header with rider name if elements exist
+    const headerElement = document.querySelector('h1');
+    if (headerElement && currentUser) {
+        headerElement.innerHTML = `<i class="fa-solid fa-motorcycle"></i> ${currentUser.name} - Rider Dashboard`;
+    }
+}
+
+async function loadRiderDashboard() {
+    try {
+        const response = await fetch(`${API_BASE}/api/rider/dashboard`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Rider dashboard data loaded:', data);
+            // Update dashboard with rider-specific data
+        } else if (response.status === 401 || response.status === 403) {
+            // Token expired or invalid
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    } catch (error) {
+        console.error('Failed to load rider dashboard:', error);
+    }
+}
+
+// Add logout functionality
+function addLogoutButton() {
+    const header = document.querySelector('h1').parentElement;
+    if (header && !document.getElementById('logout-btn')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'logout-btn';
+        logoutBtn.innerHTML = '<i class="fa-solid fa-sign-out-alt"></i> Logout';
+        logoutBtn.style.cssText = 'background: #f44336; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; float: right;';
+        logoutBtn.onclick = async () => {
+            try {
+                await fetch(`${API_BASE}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        };
+        header.appendChild(logoutBtn);
+    }
+}
+
+// Call this after DOM is loaded
+setTimeout(addLogoutButton, 100);
+
 /** ========= SERVICE WORKER (Mock Backend) ========= */
 const SW_CODE = `
   const DB = {

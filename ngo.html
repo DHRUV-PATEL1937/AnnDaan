@@ -309,6 +309,110 @@
 
 
 <script>
+/** ============== AUTHENTICATION LOGIC ============== */
+const API_BASE = 'http://localhost:5000';
+let currentUser = null;
+let authToken = null;
+
+// Check authentication on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    await checkAuthentication();
+    await loadNGODashboard();
+    renderRequests();
+});
+
+async function checkAuthentication() {
+    authToken = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!authToken || !userData) {
+        window.location.href = 'login.html';
+        return;
+    }
+    
+    try {
+        currentUser = JSON.parse(userData);
+        
+        // Verify user role
+        if (currentUser.role !== 'ngo') {
+            alert('Access denied. This page is for NGOs only.');
+            localStorage.clear();
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Update UI with user info
+        updateUserInfo();
+        
+    } catch (error) {
+        console.error('Authentication error:', error);
+        localStorage.clear();
+        window.location.href = 'login.html';
+    }
+}
+
+function updateUserInfo() {
+    // Update header with NGO name if elements exist
+    const headerElement = document.querySelector('h1');
+    if (headerElement && currentUser) {
+        headerElement.innerHTML = `<i class="fa-solid fa-hands-helping"></i> ${currentUser.name} - NGO Dashboard`;
+    }
+    
+    // Add logout button
+    addLogoutButton();
+}
+
+async function loadNGODashboard() {
+    try {
+        const response = await fetch(`${API_BASE}/api/ngo/dashboard`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('NGO dashboard data loaded:', data);
+            // Update dashboard with NGO-specific data
+        } else if (response.status === 401 || response.status === 403) {
+            // Token expired or invalid
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+    } catch (error) {
+        console.error('Failed to load NGO dashboard:', error);
+    }
+}
+
+// Add logout functionality
+function addLogoutButton() {
+    const header = document.querySelector('h1').parentElement;
+    if (header && !document.getElementById('logout-btn')) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.id = 'logout-btn';
+        logoutBtn.innerHTML = '<i class="fa-solid fa-sign-out-alt"></i> Logout';
+        logoutBtn.style.cssText = 'background: #f44336; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; float: right; margin-top: 1rem;';
+        logoutBtn.onclick = async () => {
+            try {
+                await fetch(`${API_BASE}/api/auth/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        };
+        header.appendChild(logoutBtn);
+    }
+}
+
 /** ============== NGO DASHBOARD LOGIC ============== */
 const requestList = document.getElementById('request-list');
 const deliveryList = document.getElementById('delivery-list');
