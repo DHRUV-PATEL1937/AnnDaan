@@ -1,270 +1,354 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FoodLink — Connecting Food to Those in Need</title>
-    <meta name="description" content="FoodLink connects food donors with those in need, reducing waste and fighting hunger." />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <style>
-    :root {
-      --brand: #2e7d64;
-      --text: #1b2b22;
-      --muted: #5d6b61;
-      --accent-2: #ecf3ef;
-      --bg: #f7faf7;
-      --shadow-1: 0 2px 10px rgba(0,0,0,0.05);
-      --shadow-2: 0 8px 30px rgba(21,41,32,.1);
-      --ring: 0 0 0 3px rgba(46,125,100,.3);
-      --radius-sm: 12px;
-      --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
-      --pill: linear-gradient(180deg,#ffffff,#eef3ef);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      line-height:1.5;
-    }
-    
-    /* ---------- Utilities ---------- */
-    .container{max-width:1200px;margin:0 auto;padding:0 24px}
-    .container-wide{max-width:1280px;margin:0 auto;padding:0 24px}
-    .grid{display:grid;gap:24px}
-    .center{text-align:center}
-    .btn{
-      --pad:14px 22px;
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      padding:var(--pad);
-      border-radius:999px;border:0;cursor:pointer;text-decoration:none;
-      color:#fff;background:var(--grad);font-weight:700;
-      box-shadow:var(--shadow-2);
-      transition:transform .18s ease, box-shadow .25s ease, filter .25s ease;
-    }
-    .btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
-    .btn:active{transform:translateY(0)}
-    .btn.ghost{
-      color:var(--brand);background:transparent;border:1.5px solid rgba(46,125,100,.25);box-shadow:none
-    }
-    
-    /* ---------- Decorative Dots / Shapes ---------- */
-    .shape{
-      position:absolute;border-radius:50%;filter:blur(30px);opacity:.25;pointer-events:none
-    }
-    .shape.a{width:240px;height:240px;background:#bfe7d1;left:-60px;top:-60px}
-    .shape.b{width:300px;height:300px;background:#dcefe6;right:-40px;top:-80px}
-    </style>
-    <link rel="stylesheet" href="dashboard.css" />
-</head>
-<body>
-    <!-- Decorative shapes -->
-    <div class="shape a"></div>
-    <div class="shape b"></div>
 
-<!-- ============================== NAVBAR ============================== -->
-<header class="navbar">
-    <div class="container">
-        <div class="brand">
-            <i class="fas fa-utensils"></i>
-            <h1>FoodLink</h1>
-        </div>
-        <nav class="nav">
-            <ul>
-                <li><a href="#how">How It Works</a></li>
-                <li><a href="#impact">Impact</a></li>
-                <li><a href="#about">About Us</a></li>
-            </ul>
-        </nav>
-        <div class="actions">
-             <div id="auth-links">
-                 <a href="login.html" class="btn ghost">Login</a>
-                 <a href="signup.html" class="btn">Sign Up</a>
-             </div>
-             <div id="welcome-message" style="display: none;">
-                 <span class="welcome-text">Welcome, <b id="user-name"></b>!</span>
-                 <a id="logout-link" class="btn ghost" href="#">Logout</a>
-             </div>
-         </div>
-    </div>
-</header>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>FoodLink — Connecting Food to Those in Need</title>
+        <meta name="description"
+            content="FoodLink connects food donors with those in need, reducing waste and fighting hunger." />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        <style>
+            :root {
+                --brand: #2e7d64;
+                --text: #1b2b22;
+                --muted: #5d6b61;
+                --accent-2: #ecf3ef;
+                --bg: #f7faf7;
+                --shadow-1: 0 2px 10px rgba(0, 0, 0, 0.05);
+                --shadow-2: 0 8px 30px rgba(21, 41, 32, .1);
+                --ring: 0 0 0 3px rgba(46, 125, 100, .3);
+                --radius-sm: 12px;
+                --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
+                --pill: linear-gradient(180deg, #ffffff, #eef3ef);
+            }
 
-<!-- ============================== HERO ============================== -->
-<section class="hero" id="home" aria-label="Hero">
-    <div class="container">
-        <div class="hero-content">
-            <div class="badge">Fighting Food Waste Together</div>
-            <h1>Connecting Surplus Food to Those Who Need It Most</h1>
-            <p>FoodLink bridges the gap between food donors and recipients, making it easy to reduce waste and fight hunger in our communities.</p>
-            <div class="hero-buttons">
-                <a href="food_donation_form.html" class="btn">
-                    <i class="fas fa-heart"></i> Donate Now
-                </a>
-                <a href="#how" class="btn ghost">Learn How It Works</a>
-            </div>
-        </div>
-        <div class="hero-image">
-            <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80" alt="Food donation" />
-        </div>
-    </div>
-</section>
+            * {
+                box-sizing: border-box
+            }
 
-<!-- ============================== HOW IT WORKS ============================== -->
-<section id="how" class="how-section" aria-label="How it works">
-    <div class="container">
-        <div class="section-header center">
-            <div class="badge">Simple Process</div>
-            <h2 class="section-title">How FoodLink Works</h2>
-            <p class="section-sub">Our platform makes food donation simple, efficient, and impactful</p>
-        </div>
-        <div class="steps grid">
-            <div class="step">
-                <div class="step-icon">
-                    <i class="fas fa-hand-holding-heart"></i>
-                </div>
-                <div class="num">1</div>
-                <h4>Register as a Donor</h4>
-                <p class="section-sub">Create an account and join our community of food donors committed to making a difference.</p>
-            </div>
-            <div class="step">
-                <div class="step-icon">
-                    <i class="fas fa-clipboard-list"></i>
-                </div>
-                <div class="num">2</div>
-                <h4>List Your Donation</h4>
-                <p class="section-sub">Provide details about your surplus food, including quantity, type, and pickup information.</p>
-            </div>
-            <div class="step">
-                <div class="step-icon">
-                    <i class="fas fa-exchange-alt"></i>
-                </div>
-                <div class="num">3</div>
-                <h4>Connect & Coordinate</h4>
-                <p class="section-sub">We match your donation with nearby recipients and facilitate the pickup or delivery process.</p>
-            </div>
-            <div class="step">
-                <div class="step-icon">
-                    <i class="fas fa-chart-line"></i>
-                </div>
-                <div class="num">4</div>
-                <h4>Track Your Impact</h4>
-                <p class="section-sub">See the difference your donations make with real-time impact metrics and community stories.</p>
-            </div>
-        </div>
-        <div class="center">
-            <a class="btn" href="food_donation_form.html">Start Donating Today</a>
-        </div>
-    </div>
-</section>
+            html,
+            body {
+                height: 100%
+            }
 
-<!-- ============================== IMPACT STATS ============================== -->
-<section id="impact" class="impact-section" aria-label="Impact in stats">
-    <div class="container">
-        <div class="section-header center">
-            <div class="badge">Making A Difference</div>
-            <h2 class="section-title">Our Impact</h2>
-            <p class="section-sub">Together, we're making a difference in our communities</p>
-        </div>
-        <div class="stats grid">
-            <div class="stat">
-                <div class="stat-icon"><i class="fas fa-apple-alt"></i></div>
-                <div class="stat-number">25,000+</div>
-                <div class="stat-label">Meals Donated</div>
-            </div>
-            <div class="stat">
-                <div class="stat-icon"><i class="fas fa-users"></i></div>
-                <div class="stat-number">500+</div>
-                <div class="stat-label">Active Donors</div>
-            </div>
-            <div class="stat">
-                <div class="stat-icon"><i class="fas fa-building"></i></div>
-                <div class="stat-number">100+</div>
-                <div class="stat-label">Partner Organizations</div>
-            </div>
-            <div class="stat">
-                <div class="stat-icon"><i class="fas fa-leaf"></i></div>
-                <div class="stat-number">15,000+</div>
-                <div class="stat-label">CO₂ Emissions Saved (kg)</div>
-            </div>
-        </div>
-    </div>
-</section>
+            html {
+                scroll-behavior: smooth
+            }
 
-<!-- ============================== ABOUT US ============================== -->
-<section id="about" class="about-section" aria-label="About Us">
-    <div class="container">
-        <div class="about-grid grid">
-            <div class="about-content">
-                <div class="badge">Our Story</div>
-                <h2 class="section-title">About FoodLink</h2>
-                <p>FoodLink is a non-profit organization dedicated to reducing food waste and fighting hunger in communities across the country. Our platform connects food donors—including restaurants, grocery stores, farms, and individuals—with local organizations that serve people experiencing food insecurity.</p>
-                <p>Founded in 2020, we've grown from a small local initiative to a nationwide network of food donors, volunteers, and recipient organizations working together to ensure that good food feeds people, not landfills.</p>
-                <a href="signup.html" class="btn">Join Our Mission</a>
-            </div>
-            <div class="about-image">
-                <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" alt="Team of volunteers" />
-            </div>
-        </div>
-    </div>
-</section>
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--text);
+                font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+                line-height: 1.5;
+            }
 
-<!-- ============================== FOOTER ============================== -->
-<footer class="footer">
-    <div class="container">
-        <div class="footer-grid grid">
-            <div class="footer-brand">
-                <div class="footer-logo">
+            /* ---------- Utilities ---------- */
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 24px
+            }
+
+            .container-wide {
+                max-width: 1280px;
+                margin: 0 auto;
+                padding: 0 24px
+            }
+
+            .grid {
+                display: grid;
+                gap: 24px
+            }
+
+            .center {
+                text-align: center
+            }
+
+            .btn {
+                --pad: 14px 22px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: var(--pad);
+                border-radius: 999px;
+                border: 0;
+                cursor: pointer;
+                text-decoration: none;
+                color: #fff;
+                background: var(--grad);
+                font-weight: 700;
+                box-shadow: var(--shadow-2);
+                transition: transform .18s ease, box-shadow .25s ease, filter .25s ease;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                filter: brightness(1.05)
+            }
+
+            .btn:active {
+                transform: translateY(0)
+            }
+
+            .btn.ghost {
+                color: var(--brand);
+                background: transparent;
+                border: 1.5px solid rgba(46, 125, 100, .25);
+                box-shadow: none
+            }
+
+            /* ---------- Decorative Dots / Shapes ---------- */
+            .shape {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(30px);
+                opacity: .25;
+                pointer-events: none
+            }
+
+            .shape.a {
+                width: 240px;
+                height: 240px;
+                background: #bfe7d1;
+                left: -60px;
+                top: -60px
+            }
+
+            .shape.b {
+                width: 300px;
+                height: 300px;
+                background: #dcefe6;
+                right: -40px;
+                top: -80px
+            }
+        </style>
+        <link rel="stylesheet" href="dashboard.css" />
+    </head>
+
+    <body>
+        <!-- Decorative shapes -->
+        <div class="shape a"></div>
+        <div class="shape b"></div>
+
+        <!-- ============================== NAVBAR ============================== -->
+        <header class="navbar">
+            <div class="container">
+                <div class="brand">
                     <i class="fas fa-utensils"></i>
-                    <h2>FoodLink</h2>
+                    <h1>FoodLink</h1>
                 </div>
-                <p class="footer-description">Connecting surplus food to those in need, reducing waste and fighting hunger in our communities.</p>
-                <div class="social-icons">
-                    <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                    <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <nav class="nav">
+                    <ul>
+                        <li><a href="#how">How It Works</a></li>
+                        <li><a href="#impact">Impact</a></li>
+                        <li><a href="#about">About Us</a></li>
+                    </ul>
+                </nav>
+                <div class="actions">
+                    <div id="auth-links">
+                        <a href="login.html" class="btn ghost">Login</a>
+                        <a href="signup.html" class="btn">Sign Up</a>
+                    </div>
+                    <div id="welcome-message" style="display: none;">
+                        <span class="welcome-text">Welcome, <b id="user-name"></b>!</span>
+                        <a id="logout-link" class="btn ghost" href="#">Logout</a>
+                    </div>
                 </div>
             </div>
-            <div class="footer-links">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="#how">How It Works</a></li>
-                    <li><a href="#impact">Our Impact</a></li>
-                    <li><a href="#about">About Us</a></li>
-                    <li><a href="#">FAQs</a></li>
-                    <li><a href="#">Blog</a></li>
-                </ul>
-            </div>
-            <div class="footer-links">
-                <h3>Get Involved</h3>
-                <ul>
-                    <li><a href="signup.html">Sign Up</a></li>
-                    <li><a href="login.html">Login</a></li>
-                    <li><a href="#">Volunteer</a></li>
-                    <li><a href="#">Partner With Us</a></li>
-                </ul>
-            </div>
-            <div class="footer-contact">
-                <h3>Contact Us</h3>
-                <p><i class="fas fa-envelope"></i> info@foodlink.org</p>
-                <p><i class="fas fa-phone"></i> (555) 123-4567</p>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Main Street, City, State 12345</p>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2023 FoodLink. All rights reserved.</p>
-            <div class="footer-bottom-links">
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-            </div>
-        </div>
-    </div>
-</footer>
+        </header>
 
-<script src="dashboard.js"></script>
-</body>
+        <!-- ============================== HERO ============================== -->
+        <section class="hero" id="home" aria-label="Hero">
+            <div class="container">
+                <div class="hero-content">
+                    <div class="badge">Fighting Food Waste Together</div>
+                    <h1>Connecting Surplus Food to Those Who Need It Most</h1>
+                    <p>FoodLink bridges the gap between food donors and recipients, making it easy to reduce waste and
+                        fight hunger in our communities.</p>
+                    <div class="hero-buttons">
+                        <a href="food_donation_form.html" class="btn">
+                            <i class="fas fa-heart"></i> Donate Now
+                        </a>
+                        <a href="#how" class="btn ghost">Learn How It Works</a>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                        alt="Food donation" />
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================== HOW IT WORKS ============================== -->
+        <section id="how" class="how-section" aria-label="How it works">
+            <div class="container">
+                <div class="section-header center">
+                    <div class="badge">Simple Process</div>
+                    <h2 class="section-title">How FoodLink Works</h2>
+                    <p class="section-sub">Our platform makes food donation simple, efficient, and impactful</p>
+                </div>
+                <div class="steps grid">
+                    <div class="step">
+                        <div class="step-icon">
+                            <i class="fas fa-hand-holding-heart"></i>
+                        </div>
+                        <div class="num">1</div>
+                        <h4>Register as a Donor</h4>
+                        <p class="section-sub">Create an account and join our community of food donors committed to
+                            making a difference.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="num">2</div>
+                        <h4>List Your Donation</h4>
+                        <p class="section-sub">Provide details about your surplus food, including quantity, type, and
+                            pickup information.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <div class="num">3</div>
+                        <h4>Connect & Coordinate</h4>
+                        <p class="section-sub">We match your donation with nearby recipients and facilitate the pickup
+                            or delivery process.</p>
+                    </div>
+                    <div class="step">
+                        <div class="step-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="num">4</div>
+                        <h4>Track Your Impact</h4>
+                        <p class="section-sub">See the difference your donations make with real-time impact metrics and
+                            community stories.</p>
+                    </div>
+                </div>
+                <div class="center">
+                    <a class="btn" href="food_donation_form.html">Start Donating Today</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================== IMPACT STATS ============================== -->
+        <section id="impact" class="impact-section" aria-label="Impact in stats">
+            <div class="container">
+                <div class="section-header center">
+                    <div class="badge">Making A Difference</div>
+                    <h2 class="section-title">Our Impact</h2>
+                    <p class="section-sub">Together, we're making a difference in our communities</p>
+                </div>
+                <div class="stats grid">
+                    <div class="stat">
+                        <div class="stat-icon"><i class="fas fa-apple-alt"></i></div>
+                        <div class="stat-number">25,000+</div>
+                        <div class="stat-label">Meals Donated</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Active Donors</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon"><i class="fas fa-building"></i></div>
+                        <div class="stat-number">100+</div>
+                        <div class="stat-label">Partner Organizations</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+                        <div class="stat-number">15,000+</div>
+                        <div class="stat-label">CO₂ Emissions Saved (kg)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================== ABOUT US ============================== -->
+        <section id="about" class="about-section" aria-label="About Us">
+            <div class="container">
+                <div class="about-grid grid">
+                    <div class="about-content">
+                        <div class="badge">Our Story</div>
+                        <h2 class="section-title">About FoodLink</h2>
+                        <p>FoodLink is a non-profit organization dedicated to reducing food waste and fighting hunger in
+                            communities across the country. Our platform connects food donors—including restaurants,
+                            grocery stores, farms, and individuals—with local organizations that serve people
+                            experiencing food insecurity.</p>
+                        <p>Founded in 2020, we've grown from a small local initiative to a nationwide network of food
+                            donors, volunteers, and recipient organizations working together to ensure that good food
+                            feeds people, not landfills.</p>
+                        <a href="signup.html" class="btn">Join Our Mission</a>
+                    </div>
+                    <div class="about-image">
+                        <img src="https://images.unsplash.com/photo-1593113598332-cd288d649433?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80"
+                            alt="Team of volunteers" />
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================== FOOTER ============================== -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-grid grid">
+                    <div class="footer-brand">
+                        <div class="footer-logo">
+                            <i class="fas fa-utensils"></i>
+                            <h2>FoodLink</h2>
+                        </div>
+                        <p class="footer-description">Connecting surplus food to those in need, reducing waste and
+                            fighting hunger in our communities.</p>
+                        <div class="social-icons">
+                            <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        </div>
+                    </div>
+                    <div class="footer-links">
+                        <h3>Quick Links</h3>
+                        <ul>
+                            <li><a href="#how">How It Works</a></li>
+                            <li><a href="#impact">Our Impact</a></li>
+                            <li><a href="#about">About Us</a></li>
+                            <li><a href="#">FAQs</a></li>
+                            <li><a href="#">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-links">
+                        <h3>Get Involved</h3>
+                        <ul>
+                            <li><a href="signup.html">Sign Up</a></li>
+                            <li><a href="login.html">Login</a></li>
+                            <li><a href="#">Volunteer</a></li>
+                            <li><a href="#">Partner With Us</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-contact">
+                        <h3>Contact Us</h3>
+                        <p><i class="fas fa-envelope"></i> info@foodlink.org</p>
+                        <p><i class="fas fa-phone"></i> (555) 123-4567</p>
+                        <p><i class="fas fa-map-marker-alt"></i> 123 Main Street, City, State 12345</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2025 FoodLink. All rights reserved.</p>
+                    <div class="footer-bottom-links">
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <script src="dashboard.js"></script>
+    </body>
+
 </html>

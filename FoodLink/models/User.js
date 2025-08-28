@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema({
         lowercase: true,
         trim: true,
     },
+    role: {
+        type: String,
+        enum: ['user', 'ngo', 'rider'],
+        required: true
+    },
     
     // ⭐ NEW: Fields for Email Verification
     isEmailVerified: {

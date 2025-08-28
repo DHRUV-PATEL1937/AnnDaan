@@ -183,8 +183,7 @@ class NeumorphismLoginForm {
     async handleSubmit(e) {
         e.preventDefault();
         this.clearServerError();
-
-        // FIX: Changed to validateEmail
+    
         if (!this.validateEmail() || !this.validatePassword()) {
             this.animateSoftPress(this.submitButton);
             this.showServerError('Please fix the errors before submitting.');
@@ -192,25 +191,46 @@ class NeumorphismLoginForm {
         }
         
         this.setLoading(true);
-        const email = this.emailInput.value.trim(); // FIX: Use email
+        const email = this.emailInput.value.trim();
         const password = this.passwordInput.value;
-
+    
         try {
             const response = await fetch('http://localhost:5000/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }) // FIX: Send email
+                body: JSON.stringify({ email, password })
             });
-
+    
             const data = await response.json();
-
+    
             if (response.ok) {
-                // ✅ FIX: Use the correct keys 'accessToken' and 'refreshToken'
                 localStorage.setItem('accessToken', data.accessToken);
-                localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('userName', data.user.name);
-
-                this.showNeumorphicSuccess();
+    localStorage.setItem('refreshToken', data.refreshToken);
+    localStorage.setItem('userName', data.user.name);
+    localStorage.setItem('userEmail', data.user.email);
+    localStorage.setItem('userId', data.user.id);
+    this.showNeumorphicSuccess();
+    
+                // Role-based redirection
+                let redirectUrl;
+                switch(data.user.role) {
+                    case 'donator':
+                        redirectUrl = 'dashboard.html';
+                        break;
+                    case 'ngo':
+                        redirectUrl = 'ngo_dashboard.html';
+                        break;
+                    case 'rider':
+                        redirectUrl = 'rider_dashboard.html';
+                        break;
+                    default:
+                        redirectUrl = 'dashboard.html';
+                }
+    
+                this.showNeumorphicSuccess();   
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 1500);
             } else {
                 this.showServerError(data.message || 'Login failed.');
                 this.animateSoftPress(this.submitButton);

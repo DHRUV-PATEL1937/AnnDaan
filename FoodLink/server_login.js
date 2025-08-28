@@ -11,6 +11,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 const cron = require("node-cron");
+
 // --- 1. SERVER SETUP ---
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -57,153 +58,238 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ⭐ --- FIXED AUTHENTICATION MIDDLEWARE --- ⭐
+// ⭐ --- UPDATED AUTHENTICATION MIDDLEWARE WITH ROLE SUPPORT --- ⭐
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
   if (token == null) {
-    return res.status(401).json({ message: "Authentication token is required." });
+    return res
+      .status(401)
+      .json({ message: "Authentication token is required." });
   }
 
-
   jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) {
-        // ⭐ CHANGE: Send a specific error code for expired tokens
-        if (err.name === 'TokenExpiredError') {
-            return res.status(403).json({ error: 'TokenExpiredError', message: 'Your session has expired.' });
-        }
-        return res.status(403).json({ message: "Your session is invalid. Please log in again." });
+    if (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(403).json({
+          error: "TokenExpiredError",
+          message: "Your session has expired.",
+        });
       }
-      req.user = user;
-      next();
-});
-
+      return res
+        .status(403)
+        .json({ message: "Your session is invalid. Please log in again." });
+    }
+    req.user = user;
+    next();
+  });
 }
+
+// ⭐ --- NEW: ROLE-BASED ACCESS CONTROL MIDDLEWARE --- ⭐
+function requireRole(roles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required." });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res
+        .status(403)
+        .json({ message: "Access denied. Insufficient permissions." });
+    }
+
+    next();
+  };
+}
+
 // --- 4. API ENDPOINTS ---
 
 app.get("/", (req, res) => {
-  res.send("Server is up and running! Welcome to the authentication API.");
+  res.send(
+    "Server is up and running! Welcome to the multi-role authentication API."
+  );
 });
 
-
-// --- Traditional Email/Password Signup Route (UPDATED FOR TEMP TOKEN FLOW) ---
+// ⭐ --- UPDATED SIGNUP ROUTE WITH ROLE SELECTION --- ⭐
 app.post("/signup", async (req, res) => {
-    try {
-        const { name, username, email, password } = req.body;
+  try {
+    const { name, username, email, password, role } = req.body;
 
-        if (!name || !username || !email || !password || password.length < 6) {
-            return res.status(400).json({ message: 'All fields are required and password must be at least 6 characters.' });
-        }
-        
-        // Check if a VERIFIED user already exists
-        const existingUser = await User.findOne({ 
-            $or: [{ email: email }, { username: username }],
-            isEmailVerified: true 
-        });
-        
-        if (existingUser) {
-            return res.status(409).json({ message: 'An account with this email or username already exists.' });
-        }
-
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // --- Create a temporary registration token instead of saving the user ---
-        const registrationPayload = { name, username, email, password: hashedPassword, otp };
-        const registrationToken = jwt.sign(registrationPayload, JWT_SECRET, { expiresIn: '15m' });
-
-        // Send the OTP email
-        const transporter = nodemailer.createTransport({
-            service: EMAIL_SERVICE,
-            auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-        });
-
-        const mailOptions = {
-            to: email,
-            from: `FoodLink <${EMAIL_USER}>`,
-            subject: "Verify Your Email Address for FoodLink",
-            html: `<p>Your One-Time Password (OTP) for email verification is: <strong>${otp}</strong>. It will expire in 15 minutes.</p>`,
-        };
-
-        await transporter.sendMail(mailOptions);
-        console.log(`✅ Verification OTP sent to: ${email}`);
-        
-        // --- Send the temporary token back to the client ---
-        res.status(200).json({ 
-            message: 'A verification OTP has been sent to your email.',
-            registrationToken: registrationToken // This token holds the user's data temporarily
-        });
-
-    } catch (error) {
-        console.error("❌ Signup error:", error);
-        res.status(500).json({ message: 'An error occurred during signup.' });
+    // Validate role
+    const validRoles = ["user", "ngo", "rider"];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Please select a valid role: user, ngo, or rider.",
+      });
     }
+
+    if (!name || !username || !email || !password || password.length < 6) {
+      return res.status(400).json({
+        message:
+          "All fields are required and password must be at least 6 characters.",
+      });
+    }
+
+    // Check if a VERIFIED user already exists
+    const existingUser = await User.findOne({
+      $or: [{ email: email }, { username: username }],
+      isEmailVerified: true,
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "An account with this email or username already exists.",
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a temporary registration token with role
+    const registrationPayload = {
+      name,
+      username,
+      email,
+      password: hashedPassword,
+      role,
+      otp,
+    };
+    const registrationToken = jwt.sign(registrationPayload, JWT_SECRET, {
+      expiresIn: "15m",
+    });
+
+    // Send the OTP email
+    const transporter = nodemailer.createTransporter({
+      service: EMAIL_SERVICE,
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+    });
+
+    const roleDisplayName =
+      role === "user" ? "User" : role === "ngo" ? "NGO" : "Rider";
+
+    const mailOptions = {
+      to: email,
+      from: `FoodLink <${EMAIL_USER}>`,
+      subject: "Verify Your Email Address for FoodLink",
+      html: `
+                <p>Welcome to FoodLink as a <strong>${roleDisplayName}</strong>!</p>
+                <p>Your One-Time Password (OTP) for email verification is: <strong>${otp}</strong></p>
+                <p>It will expire in 15 minutes.</p>
+            `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Verification OTP sent to: ${email} (Role: ${role})`);
+
+    res.status(200).json({
+      message: "A verification OTP has been sent to your email.",
+      registrationToken: registrationToken,
+      role: role,
+    });
+  } catch (error) {
+    console.error("❌ Signup error:", error);
+    res.status(500).json({ message: "An error occurred during signup." });
+  }
 });
 
-// --- Verify OTP and Complete Registration (UPDATED FOR TEMP TOKEN FLOW) ---
+// ⭐ --- UPDATED OTP VERIFICATION WITH ROLE --- ⭐
 app.post("/api/auth/verify-otp", async (req, res) => {
-    try {
-        const { otp, registrationToken } = req.body;
-        if (!otp || !registrationToken) {
-            return res.status(400).json({ message: "OTP and registration token are required." });
-        }
-
-        // Verify the temporary token
-        let decodedPayload;
-        try {
-            decodedPayload = jwt.verify(registrationToken, JWT_SECRET);
-        } catch (error) {
-            return res.status(400).json({ message: "The verification link is invalid or has expired. Please sign up again." });
-        }
-        
-        // Check if the provided OTP matches the one in the token
-        if (decodedPayload.otp !== otp) {
-            return res.status(400).json({ message: "The OTP is incorrect." });
-        }
-
-        const { name, username, email, password } = decodedPayload;
-        
-        // Final check to ensure no verified user was created in the meantime
-        const existingUser = await User.findOne({ $or: [{ email: email }, { username: username }], isEmailVerified: true });
-        if (existingUser) {
-            return res.status(409).json({ message: 'An account with this email or username already exists.' });
-        }
-
-        // --- Create and save the user to the database NOW ---
-        const newUser = new User({
-            name,
-            username,
-            email,
-            password,
-            isEmailVerified: true,
-            lastLoginAt: Date.now()
-        });
-
-        // Generate final login tokens
-        const accessToken = jwt.sign({ id: newUser._id, name: newUser.name, email: newUser.email }, JWT_SECRET, { expiresIn: '15m' });
-        const refreshToken = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '7d' });
-        
-        newUser.refreshToken = refreshToken;
-        await newUser.save();
-
-        console.log(`✅ User registered and verified successfully: ${email}`);
-
-        // Send back final tokens to log the user in
-        res.status(201).json({
-            message: "Account verified and created successfully!",
-            accessToken,
-            refreshToken,
-            user: { id: newUser._id, name: newUser.name }
-        });
-
-    } catch (error) {
-        console.error("❌ OTP verification error:", error);
-        res.status(500).json({ message: "An error occurred during verification." });
+  try {
+    const { otp, registrationToken } = req.body;
+    if (!otp || !registrationToken) {
+      return res
+        .status(400)
+        .json({ message: "OTP and registration token are required." });
     }
+
+    let decodedPayload;
+    try {
+      decodedPayload = jwt.verify(registrationToken, JWT_SECRET);
+    } catch (error) {
+      return res.status(400).json({
+        message:
+          "The verification link is invalid or has expired. Please sign up again.",
+      });
+    }
+
+    if (decodedPayload.otp !== otp) {
+      return res.status(400).json({ message: "The OTP is incorrect." });
+    }
+
+    const { name, username, email, password, role } = decodedPayload;
+
+    const existingUser = await User.findOne({
+      $or: [{ email: email }, { username: username }],
+      isEmailVerified: true,
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "An account with this email or username already exists.",
+      });
+    }
+
+    // Create and save the user with role
+    const newUser = new User({
+      name,
+      username,
+      email,
+      password,
+      role, // Add role to user
+      isEmailVerified: true,
+      lastLoginAt: Date.now(),
+    });
+
+    // Generate tokens with role information
+    const accessToken = jwt.sign(
+      {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    const refreshToken = jwt.sign(
+      {
+        id: newUser._id,
+      },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    newUser.refreshToken = refreshToken;
+    await newUser.save();
+
+    console.log(
+      `✅ ${role.toUpperCase()} user registered successfully: ${email}`
+    );
+
+    // Determine dashboard URL based on role
+    const dashboardUrl = getDashboardUrl(role);
+
+    res.status(201).json({
+      message: "Account verified and created successfully!",
+      accessToken,
+      refreshToken,
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+      },
+      dashboardUrl,
+    });
+  } catch (error) {
+    console.error("❌ OTP verification error:", error);
+    res.status(500).json({ message: "An error occurred during verification." });
+  }
 });
 
-// --- Traditional Email/Password Login Route ---
+// ⭐ --- UPDATED LOGIN ROUTE WITH ROLE-BASED DASHBOARD REDIRECT --- ⭐
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -216,11 +302,9 @@ app.post("/login", async (req, res) => {
 
     const user = await User.findOne({ email: email });
     if (!user || !user.password) {
-      return res
-        .status(400)
-        .json({
-          message: "Invalid credentials or user signed up with Google.",
-        });
+      return res.status(400).json({
+        message: "Invalid credentials or user signed up with Google.",
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
@@ -235,22 +319,38 @@ app.post("/login", async (req, res) => {
       id: user._id,
       email: user.email,
       name: user.name,
+      role: user.role, // Include role in token
     };
-    // ⭐ CHANGE: Issue two tokens and save the refresh token
-    // ⭐ CHANGE: Issue two tokens and save the refresh token
-    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '15m' }); // Short-lived
-    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' }); // Long-lived
 
-    // Save the refresh token to the database
+    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, {
+      expiresIn: "15m",
+    });
+    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
     user.refreshToken = refreshToken;
     await user.save();
 
-    console.log(`✅ Traditional user logged in successfully: ${user.email}`);
+    const dashboardUrl = getDashboardUrl(user.role);
+
+    console.log(
+      `✅ ${user.role?.toUpperCase() || "USER"} logged in successfully: ${
+        user.email
+      }`
+    );
+
     res.status(200).json({
-        message: "Login successful!",
-        accessToken: accessToken,  // Send both tokens
-        refreshToken: refreshToken,
-        user: { id: user._id, name: user.name, email: user.email },
+      message: "Login successful!",
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role || "user",
+      },
+      dashboardUrl,
     });
   } catch (error) {
     console.error("❌ Login error:", error);
@@ -258,10 +358,31 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// --- Google Sign-In/Signup Route (UPDATED) ---
+// ⭐ --- HELPER FUNCTION FOR DASHBOARD URLS --- ⭐
+function getDashboardUrl(role) {
+  switch (role) {
+    case "ngo":
+      return "/ngo-dashboard";
+    case "rider":
+      return "/rider-dashboard";
+    case "user":
+    default:
+      return "/user-dashboard";
+  }
+}
+
+// ⭐ --- UPDATED GOOGLE SIGN-IN WITH ROLE SELECTION --- ⭐
 app.post("/api/auth/google-signin", async (req, res) => {
   try {
-    const { token } = req.body;
+    const { token, role } = req.body; // Include role in request
+
+    // Validate role if provided
+    const validRoles = ["user", "ngo", "rider"];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Please select a valid role: user, ngo, or rider.",
+      });
+    }
 
     const ticket = await client.verifyIdToken({
       idToken: token,
@@ -282,22 +403,35 @@ app.post("/api/auth/google-signin", async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.name,
+        role: user.role,
       };
-      const appToken = jwt.sign(appTokenPayload, JWT_SECRET, {
-        expiresIn: "8h",
+
+      const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, {
+        expiresIn: "15m",
       });
+      const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+        expiresIn: "7d",
+      });
+
+      user.refreshToken = refreshToken;
+      await user.save();
+
+      const dashboardUrl = getDashboardUrl(user.role);
 
       return res.status(200).json({
         message: "Login successful!",
-        appToken: appToken,
+        accessToken: accessToken,
+        refreshToken: refreshToken,
         user: {
           id: user._id,
           name,
           email,
+          role: user.role,
           picture,
           phone: user.phone,
           address: user.address,
         },
+        dashboardUrl,
       });
     }
 
@@ -310,35 +444,45 @@ app.post("/api/auth/google-signin", async (req, res) => {
         user.picture = picture;
         await user.save();
         console.log(`✅ Linked Google ID to existing user: ${email}`);
-        // Since they have a username already, we can log them in
+
         const appTokenPayload = {
           id: user._id,
           email: user.email,
           name: user.name,
+          role: user.role,
         };
-        // ⭐ CHANGE: Issue two tokens and save the refresh token
-    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '15m' }); // Short-lived
-    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' }); // Long-lived
 
-    // Save the refresh token to the database
-    user.refreshToken = refreshToken;
-    await user.save();
+        const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, {
+          expiresIn: "15m",
+        });
+        const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+          expiresIn: "7d",
+        });
 
-    console.log(`✅ Traditional user logged in successfully: ${user.email}`);
-    res.status(200).json({
-        message: "Login successful!",
-        accessToken: accessToken,  // Send both tokens
-        refreshToken: refreshToken,
-        user: { id: user._id, name: user.name, email: user.email },
-    });
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        const dashboardUrl = getDashboardUrl(user.role);
+
+        return res.status(200).json({
+          message: "Login successful!",
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          },
+          dashboardUrl,
+        });
       }
     }
 
-    // If user is brand new (not found by googleId or email)
-    // Or if they are a returning Google user who never set a username
+    // If user is brand new or returning Google user who never set a username
     if (!user || !user.username) {
-      // Create a temporary token with Google info
-      const tempTokenPayload = { googleId, name, email, picture };
+      // Create a temporary token with Google info and role
+      const tempTokenPayload = { googleId, name, email, picture, role };
       const tempToken = jwt.sign(tempTokenPayload, JWT_SECRET, {
         expiresIn: "15m",
       });
@@ -346,11 +490,12 @@ app.post("/api/auth/google-signin", async (req, res) => {
       console.log(
         `✅ New Google user detected. Prompting for username for email: ${email}`
       );
-      // Send back a response indicating a username is required
+
       return res.status(202).json({
         message: "Username required to complete registration.",
         usernameRequired: true,
-        tempToken: tempToken, // Send this temporary token to the client
+        tempToken: tempToken,
+        role: role,
       });
     }
   } catch (error) {
@@ -359,96 +504,111 @@ app.post("/api/auth/google-signin", async (req, res) => {
   }
 });
 
-// ⭐ NEW ENDPOINT: To complete Google signup with a username
+// ⭐ UPDATED: Complete Google signup with username and role
 app.post("/api/auth/complete-google-signup", async (req, res) => {
   try {
-    const { tempToken, username } = req.body;
+    const { tempToken, username, role } = req.body;
 
     if (!tempToken || !username) {
-      return res
-        .status(400)
-        .json({ message: "A temporary token and username are required." });
+      return res.status(400).json({
+        message: "A temporary token and username are required.",
+      });
     }
 
-    // Verify the temporary token
+    // Validate role
+    const validRoles = ["user", "ngo", "rider"];
+    if (role && !validRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Please select a valid role: user, ngo, or rider.",
+      });
+    }
+
     const decoded = jwt.verify(tempToken, JWT_SECRET);
     const { googleId, name, email, picture } = decoded;
+    const userRole = role || decoded.role || "user"; // Use provided role or default
 
     // Check if username is already taken
     const existingUsername = await User.findOne({ username: username });
     if (existingUsername) {
-      return res
-        .status(409)
-        .json({
-          message: "This username is already taken. Please choose another one.",
-        });
+      return res.status(409).json({
+        message: "This username is already taken. Please choose another one.",
+      });
     }
 
-    // Find user by googleId (they might exist from a previous failed attempt)
     let user = await User.findOne({ googleId: googleId });
 
     if (user) {
-      // Update existing user who was missing a username
       user.username = username;
+      user.role = userRole; // Set role
       console.log(
-        `✅ Updating existing Google user with new username: ${username}`
+        `✅ Updating existing Google user with username: ${username}, role: ${userRole}`
       );
     } else {
-      // Create a brand new user
       user = new User({
         googleId,
         name,
         email,
         picture,
         username,
+        role: userRole,
         createdAt: Date.now(),
       });
-      console.log(`✅ Finalizing new Google user with username: ${username}`);
+      console.log(
+        `✅ Creating new Google user with username: ${username}, role: ${userRole}`
+      );
     }
 
     user.lastLoginAt = Date.now();
     await user.save();
 
-    // Now create the final, long-term login token
     const appTokenPayload = {
       id: user._id,
       email: user.email,
       name: user.name,
+      role: user.role,
     };
-    // ⭐ CHANGE: Issue two tokens and save the refresh token
-    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+    const accessToken = jwt.sign(appTokenPayload, JWT_SECRET, {
+      expiresIn: "15m",
+    });
+    const refreshToken = jwt.sign({ id: user._id }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
     user.refreshToken = refreshToken;
     await user.save();
 
+    const dashboardUrl = getDashboardUrl(user.role);
+
     res.status(201).json({
-        message: "Registration complete! You are now logged in.",
-        accessToken,
-        refreshToken,
+      message: "Registration complete! You are now logged in.",
+      accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name,
         email,
+        role: user.role,
         picture,
         phone: user.phone,
         address: user.address,
       },
+      dashboardUrl,
     });
   } catch (error) {
     if (
       error.name === "JsonWebTokenError" ||
       error.name === "TokenExpiredError"
     ) {
-      return res
-        .status(401)
-        .json({ message: "Your session has expired. Please sign in again." });
+      return res.status(401).json({
+        message: "Your session has expired. Please sign in again.",
+      });
     }
     console.error("❌ Error completing Google signup:", error);
     res.status(500).json({ message: "An unexpected server error occurred." });
   }
 });
 
-// --- Forgot Password Request Endpoint ---
+// --- EXISTING FORGOT PASSWORD AND RESET ENDPOINTS (NO CHANGES NEEDED) ---
 app.post("/api/auth/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -458,16 +618,13 @@ app.post("/api/auth/forgot-password", async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    // *** KEY CHANGE IS HERE ***
-    // If user does not exist, return a 404 error.
     if (!user) {
       console.warn(`Forgot password attempt for non-existent email: ${email}`);
-      return res
-        .status(404)
-        .json({ message: "An account with this email does not exist." });
+      return res.status(404).json({
+        message: "An account with this email does not exist.",
+      });
     }
 
-    // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = Date.now() + 600000; // 10 minutes from now
 
@@ -475,49 +632,44 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     user.resetPasswordExpires = expiry;
     await user.save();
 
-    // Setup email transporter
-    const transporter = nodemailer.createTransport({
+    const transporter = nodemailer.createTransporter({
       service: EMAIL_SERVICE,
       auth: { user: EMAIL_USER, pass: EMAIL_PASS },
     });
 
     const mailOptions = {
       to: user.email,
-      from: `Your App Name <${EMAIL_USER}>`,
+      from: `FoodLink <${EMAIL_USER}>`,
       subject: "Your Password Reset OTP",
       html: `<p>Your One-Time Password (OTP) to reset your password is: <strong>${otp}</strong></p>`,
     };
 
     await transporter.sendMail(mailOptions);
     console.log(`✅ Password reset OTP sent to: ${user.email}`);
-    // Send a success message confirming that the OTP was sent.
-    res
-      .status(200)
-      .json({ message: "An OTP has been sent to your email address." });
+    res.status(200).json({
+      message: "An OTP has been sent to your email address.",
+    });
   } catch (error) {
     console.error("❌ Forgot password error:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error processing your request. Please try again later.",
-      });
+    res.status(500).json({
+      message: "Error processing your request. Please try again later.",
+    });
   }
 });
 
-// 2. Reset Password with OTP
 app.post("/api/auth/reset-with-otp", async (req, res) => {
   try {
     const { email, otp, newPassword } = req.body;
 
     if (!email || !otp || !newPassword) {
-      return res
-        .status(400)
-        .json({ message: "Email, OTP, and new password are required." });
+      return res.status(400).json({
+        message: "Email, OTP, and new password are required.",
+      });
     }
     if (newPassword.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters long." });
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long.",
+      });
     }
 
     const user = await User.findOne({ email: email });
@@ -529,9 +681,9 @@ app.post("/api/auth/reset-with-otp", async (req, res) => {
       user.resetPasswordToken !== otp ||
       user.resetPasswordExpires < Date.now()
     ) {
-      return res
-        .status(400)
-        .json({ message: "OTP is invalid or has expired." });
+      return res.status(400).json({
+        message: "OTP is invalid or has expired.",
+      });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -541,22 +693,97 @@ app.post("/api/auth/reset-with-otp", async (req, res) => {
     await user.save();
 
     console.log(`✅ Password successfully reset for user: ${user.email}`);
-    res
-      .status(200)
-      .json({ message: "Your password has been successfully updated." });
+    res.status(200).json({
+      message: "Your password has been successfully updated.",
+    });
   } catch (error) {
     console.error("❌ Reset password error:", error);
     res.status(500).json({ message: "Error resetting password." });
   }
 });
 
-// --- PROTECTED USER PROFILE ROUTES ---
+// ⭐ --- ROLE-SPECIFIC PROTECTED ROUTES --- ⭐
 
-// Fetch User Profile
+// User Dashboard Route
+app.get(
+  "/api/user/dashboard",
+  authenticateToken,
+  requireRole(["user"]),
+  (req, res) => {
+    res.json({
+      message: "Welcome to the User Dashboard!",
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+      dashboardData: {
+        availableDonations: "Access to browse and request donations",
+        features: ["Browse food donations", "Request pickup", "Track requests"],
+      },
+    });
+  }
+);
+
+// NGO Dashboard Route
+app.get(
+  "/api/ngo/dashboard",
+  authenticateToken,
+  requireRole(["ngo"]),
+  (req, res) => {
+    res.json({
+      message: "Welcome to the NGO Dashboard!",
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+      dashboardData: {
+        manageDonations: "Manage donation requests and distributions",
+        features: [
+          "View all donations",
+          "Manage beneficiaries",
+          "Track distributions",
+          "Generate reports",
+        ],
+      },
+    });
+  }
+);
+
+// Rider Dashboard Route
+app.get(
+  "/api/rider/dashboard",
+  authenticateToken,
+  requireRole(["rider"]),
+  (req, res) => {
+    res.json({
+      message: "Welcome to the Rider Dashboard!",
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+      dashboardData: {
+        pickupRequests: "View and manage pickup requests",
+        features: [
+          "View pickup requests",
+          "Update delivery status",
+          "Track routes",
+          "Earnings summary",
+        ],
+      },
+    });
+  }
+);
+
+// --- UPDATED PROFILE ROUTES ---
 app.get("/api/profile", authenticateToken, async (req, res) => {
   try {
-    // req.user is populated by the authenticateToken middleware
-    const userProfile = await User.findById(req.user.id).select("-password"); // Exclude password from result
+    const userProfile = await User.findById(req.user.id).select("-password");
     if (!userProfile) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -567,7 +794,6 @@ app.get("/api/profile", authenticateToken, async (req, res) => {
   }
 });
 
-// Update User Profile
 app.put("/api/profile", authenticateToken, async (req, res) => {
   const { name, phone, address } = req.body;
   try {
@@ -576,15 +802,13 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // Update fields if they are provided in the request
     if (name) user.name = name;
     if (phone) user.phone = phone;
     if (address) user.address = address;
 
     const updatedUser = await user.save();
-
     const userResponse = { ...updatedUser.toObject() };
-    delete userResponse.password; // Ensure password is not sent back
+    delete userResponse.password;
 
     res.status(200).json({
       message: "Profile updated successfully!",
@@ -596,151 +820,186 @@ app.put("/api/profile", authenticateToken, async (req, res) => {
   }
 });
 
+// ⭐ --- ROLE-SPECIFIC DONATION ENDPOINTS --- ⭐
 
-// ⭐ ======================================================
-// ⭐ NEW: DONATION API ENDPOINTS
-// ⭐ ======================================================
-
-/**
- * @route   POST /api/donations
- * @desc    Create a new food donation listing
- * @access  Private (requires authentication)
- */
-app.post("/api/donations", authenticateToken, async (req, res) => {
+// Create donation (Users and NGOs can create donations)
+app.post(
+  "/api/donations",
+  authenticateToken,
+  requireRole(["user", "ngo"]),
+  async (req, res) => {
     try {
-        const {
-            donorName,
-            contactNumber,
-            address,
-            foodType,
-            quantity,
-            notes,
-            pickupTime,
-            cookedTime,
-            shelfLifeHours
-        } = req.body;
+      const {
+        donorName,
+        contactNumber,
+        address,
+        foodType,
+        quantity,
+        notes,
+        pickupTime,
+        cookedTime,
+        shelfLifeHours,
+      } = req.body;
 
-        // --- Expiry Calculation (Critical Server-Side Logic) ---
-        const cookedDateTime = new Date(cookedTime);
-        const expiryDateTime = new Date(cookedDateTime.getTime() + shelfLifeHours * 60 * 60 * 1000);
+      const cookedDateTime = new Date(cookedTime);
+      const expiryDateTime = new Date(
+        cookedDateTime.getTime() + shelfLifeHours * 60 * 60 * 1000
+      );
 
-        const newDonation = new Donation({
-            donorId: req.user.id, // Get the user ID from the authenticated token
-            donorName,
-            contactNumber,
-            address,
-            foodType,
-            quantity,
-            notes,
-            pickupTime,
-            cookedTime,
-            shelfLifeHours,
-            expiryDateTime // Store the calculated expiry time
-        });
+      const newDonation = new Donation({
+        donorId: req.user.id,
+        donorName,
+        contactNumber,
+        address,
+        foodType,
+        quantity,
+        notes,
+        pickupTime,
+        cookedTime,
+        shelfLifeHours,
+        expiryDateTime,
+      });
 
-        await newDonation.save();
+      await newDonation.save();
 
-        console.log(`✅ New donation created by user: ${req.user.email}`);
-        res.status(201).json({ message: "Donation listed successfully!", donation: newDonation });
-
+      console.log(
+        `✅ New donation created by ${req.user.role}: ${req.user.email}`
+      );
+      res.status(201).json({
+        message: "Donation listed successfully!",
+        donation: newDonation,
+      });
     } catch (error) {
-        console.error("❌ Error creating donation:", error);
-        res.status(500).json({ message: "Failed to list donation due to a server error." });
+      console.error("❌ Error creating donation:", error);
+      res.status(500).json({
+        message: "Failed to list donation due to a server error.",
+      });
     }
+  }
+);
+
+// Get donations (All roles can view, but with different permissions)
+app.get("/api/donations", authenticateToken, async (req, res) => {
+  try {
+    let query = { status: "available" };
+
+    // NGOs can see all donations, users see only available ones
+    if (req.user.role === "ngo") {
+      query = {}; // NGOs can see all donations regardless of status
+    }
+
+    const donations = await Donation.find(query).sort({ createdAt: -1 });
+    res.status(200).json(donations);
+  } catch (error) {
+    console.error("❌ Error fetching donations:", error);
+    res.status(500).json({
+      message: "Failed to fetch donations due to a server error.",
+    });
+  }
 });
 
-
-/**
- * @route   GET /api/donations
- * @desc    Get all available food donation listings
- * @access  Public
- */
-app.get("/api/donations", async (req, res) => {
+// Rider-specific route to get pickup requests
+app.get(
+  "/api/rider/pickup-requests",
+  authenticateToken,
+  requireRole(["rider"]),
+  async (req, res) => {
     try {
-        // Find donations that are 'available' and sort by creation date (newest first)
-        const availableDonations = await Donation.find({ status: 'available' }).sort({ createdAt: -1 });
-        
-        res.status(200).json(availableDonations);
+      // Find donations that need pickup (you might want to add a 'pickup_requested' status)
+      const pickupRequests = await Donation.find({
+        status: { $in: ["available", "pickup_requested"] },
+      }).sort({ createdAt: -1 });
 
+      res.status(200).json({
+        message: "Pickup requests retrieved successfully",
+        requests: pickupRequests,
+      });
     } catch (error) {
-        console.error("❌ Error fetching donations:", error);
-        res.status(500).json({ message: "Failed to fetch donations due to a server error." });
+      console.error("❌ Error fetching pickup requests:", error);
+      res.status(500).json({
+        message: "Failed to fetch pickup requests due to a server error.",
+      });
     }
-});
+  }
+);
 
-// ⭐ NEW: Refresh Token Endpoint
+// --- TOKEN REFRESH AND LOGOUT (UPDATED WITH ROLE) ---
 app.post("/api/auth/refresh-token", async (req, res) => {
-    const { token } = req.body;
-    if (!token) return res.sendStatus(401);
+  const { token } = req.body;
+  if (!token) return res.sendStatus(401);
 
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded.id);
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const user = await User.findById(decoded.id);
 
-        if (!user || user.refreshToken !== token) {
-            return res.status(403).json({ message: "Invalid refresh token." });
-        }
-
-        const newAccessToken = jwt.sign({ id: user._id, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '15m' });
-        res.json({ accessToken: newAccessToken });
-
-    } catch (error) {
-        return res.status(403).json({ message: "Invalid refresh token." });
+    if (!user || user.refreshToken !== token) {
+      return res.status(403).json({ message: "Invalid refresh token." });
     }
+
+    const newAccessToken = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    res.json({ accessToken: newAccessToken });
+  } catch (error) {
+    return res.status(403).json({ message: "Invalid refresh token." });
+  }
 });
 
-// ⭐ NEW: Logout Endpoint
 app.post("/api/auth/logout", authenticateToken, async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (user) {
-            user.refreshToken = null; // Invalidate the refresh token
-            await user.save();
-        }
-        res.status(200).json({ message: "Logged out successfully." });
-    } catch (error) {
-        res.status(500).json({ message: "Logout failed." });
+  try {
+    const user = await User.findById(req.user.id);
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
     }
+    res.status(200).json({ message: "Logged out successfully." });
+  } catch (error) {
+    res.status(500).json({ message: "Logout failed." });
+  }
 });
 
 // --- 5. START THE SERVER ---
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
+  console.log(`📊 Supported user roles: User, NGO, Rider`);
 });
 
+// --- SCHEDULED TASK FOR EXPIRY (NO CHANGES NEEDED) ---
+cron.schedule("*/5 * * * *", async () => {
+  console.log(
+    `\n  Running scheduled expiry check at ${new Date().toLocaleString()}`
+  );
 
-// ⭐ ======================================================
-// ⭐ NEW: SCHEDULED TASK TO HANDLE EXPIRY
-// ⭐ ======================================================
+  try {
+    const now = new Date();
 
-/**
- * This cron job runs every 5 minutes.
- * It queries the database for 'available' donations and checks if their
- * expiry time has passed. If so, it updates their status to 'expired'.
- */
-cron.schedule('*/5 * * * *', async () => {
-    console.log(`\n⚙️  Running scheduled expiry check at ${new Date().toLocaleString()}`);
-    
-    try {
-        const now = new Date();
-        
-        // Find all donations that are currently 'available' and whose expiryDateTime is in the past.
-        const result = await Donation.updateMany(
-            { 
-                status: 'available', 
-                expiryDateTime: { $lt: now } 
-            },
-            { 
-                $set: { status: 'expired' } 
-            }
-        );
+    // Find all donations that are currently 'available' and whose expiryDateTime is in the past.
+    const result = await Donation.updateMany(
+      {
+        status: "available",
+        expiryDateTime: { $lt: now },
+      },
+      {
+        $set: { status: "expired" },
+      }
+    );
 
-        if (result.modifiedCount > 0) {
-            console.log(`   - ❌ Marked ${result.modifiedCount} donation(s) as EXPIRED.`);
-        } else {
-            console.log("   - No available donations have expired.");
-        }
-    } catch (error) {
-        console.error("   - ❌ Error during scheduled expiry check:", error);
+    if (result.modifiedCount > 0) {
+      console.log(
+        `   - ❌ Marked ${result.modifiedCount} donation(s) as EXPIRED.`
+      );
+    } else {
+      console.log("   - No available donations have expired.");
     }
+  } catch (error) {
+    console.error("   - ❌ Error during scheduled expiry check:", error);
+  }
 });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rider Dashboard - FoodLink</title>
+    <title>NGO Dashboard - FoodLink</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
@@ -19,9 +19,8 @@
             --radius-sm: 12px;
             --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
             --orange: #ff9800;
-            --blue: #2196f3;
+            --red: #f44336;
             --green: #4caf50;
-            --purple: #9c27b0;
         }
 
         * {
@@ -178,28 +177,13 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
+            background: var(--grad);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1rem;
             color: white;
             font-size: 1.5rem;
-        }
-
-        .stat-icon.deliveries {
-            background: var(--grad);
-        }
-
-        .stat-icon.earnings {
-            background: linear-gradient(135deg, #ff9800, #ffb74d);
-        }
-
-        .stat-icon.distance {
-            background: linear-gradient(135deg, #2196f3, #64b5f6);
-        }
-
-        .stat-icon.rating {
-            background: linear-gradient(135deg, #9c27b0, #ba68c8);
         }
 
         .stat-number {
@@ -214,63 +198,67 @@
             font-size: 0.9rem;
         }
 
-        /* Pickup Requests Grid */
-        .requests-grid {
+        /* Donations Grid */
+        .donations-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 1.5rem;
             margin-top: 2rem;
         }
 
-        .request-card {
+        .donation-card {
             border: 1px solid var(--accent-2);
             border-radius: var(--radius-sm);
             padding: 1.5rem;
             transition: all 0.3s ease;
-            position: relative;
         }
 
-        .request-card:hover {
+        .donation-card:hover {
             box-shadow: var(--shadow-2);
             transform: translateY(-2px);
         }
 
-        .request-header {
+        .donation-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
         }
 
-        .request-title {
+        .donation-title {
             font-weight: 600;
             color: var(--text);
             font-size: 1.1rem;
         }
 
-        .priority-badge {
+        .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
         }
 
-        .priority-high {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .priority-medium {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-
-        .priority-low {
+        .status-available {
             background: #e8f5e8;
             color: #2e7d32;
         }
 
-        .request-details {
+        .status-picked {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-completed {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-expired {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .donation-details {
             margin-bottom: 1rem;
         }
 
@@ -291,7 +279,7 @@
             font-weight: 600;
         }
 
-        .request-actions {
+        .donation-actions {
             display: flex;
             gap: 0.5rem;
             margin-top: 1rem;
@@ -329,15 +317,6 @@
             background: #e68900;
         }
 
-        .btn-success {
-            background: var(--green);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #388e3c;
-        }
-
         /* Content sections */
         .content-section {
             display: none;
@@ -347,26 +326,20 @@
             display: block;
         }
 
-        /* Status indicator */
-        .status-indicator {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
         }
 
-        .status-available {
-            background: var(--green);
-        }
-
-        .status-in-progress {
-            background: var(--orange);
-        }
-
-        .status-completed {
-            background: var(--blue);
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--accent-2);
+            border-radius: 6px;
+            background: white;
+            color: var(--text);
         }
 
         /* Responsive */
@@ -380,7 +353,7 @@
                 order: 2;
             }
 
-            .requests-grid {
+            .donations-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -403,16 +376,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        /* Distance badge */
-        .distance-badge {
-            background: var(--accent-2);
-            color: var(--brand);
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
@@ -420,11 +383,11 @@
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                <i class="fas fa-motorcycle"></i>
-                <span>FoodLink Rider</span>
+                <i class="fas fa-utensils"></i>
+                <span>FoodLink NGO</span>
             </div>
             <div class="user-info">
-                <div class="user-avatar" id="userAvatar">R</div>
+                <div class="user-avatar" id="userAvatar">N</div>
                 <span id="userName">Loading...</span>
                 <button class="logout-btn" onclick="logout()">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -442,21 +405,13 @@
                     <i class="fas fa-home"></i>
                     <span>Overview</span>
                 </div>
-                <div class="nav-item" onclick="showSection('requests')">
+                <div class="nav-item" onclick="showSection('donations')">
                     <i class="fas fa-list"></i>
-                    <span>Pickup Requests</span>
+                    <span>All Donations</span>
                 </div>
-                <div class="nav-item" onclick="showSection('active')">
-                    <i class="fas fa-truck"></i>
-                    <span>Active Deliveries</span>
-                </div>
-                <div class="nav-item" onclick="showSection('history')">
-                    <i class="fas fa-history"></i>
-                    <span>Delivery History</span>
-                </div>
-                <div class="nav-item" onclick="showSection('earnings')">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span>Earnings</span>
+                <div class="nav-item" onclick="showSection('manage')">
+                    <i class="fas fa-cogs"></i>
+                    <span>Manage Requests</span>
                 </div>
                 <div class="nav-item" onclick="showSection('profile')">
                     <i class="fas fa-user"></i>
@@ -469,137 +424,105 @@
         <main class="dashboard-content">
             <!-- Overview Section -->
             <div id="overview" class="content-section active">
-                <h1 class="page-title">Rider Dashboard</h1>
-                <p class="page-subtitle">Manage pickup requests and track your deliveries</p>
+                <h1 class="page-title">NGO Dashboard</h1>
+                <p class="page-subtitle">Manage food donations and help distribute to those in need</p>
 
                 <!-- Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-icon deliveries">
+                        <div class="stat-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="stat-number" id="totalAvailable">0</div>
+                        <div class="stat-label">Available Donations</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
                             <i class="fas fa-truck"></i>
                         </div>
-                        <div class="stat-number" id="totalDeliveries">0</div>
-                        <div class="stat-label">Total Deliveries</div>
+                        <div class="stat-number" id="totalManaged">0</div>
+                        <div class="stat-label">Managed This Month</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-dollar-sign"></i>
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
                         </div>
-                        <div class="stat-number" id="totalEarnings">₹0</div>
-                        <div class="stat-label">Total Earnings</div>
+                        <div class="stat-number" id="peopleServed">0</div>
+                        <div class="stat-label">People Served</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-icon distance">
-                            <i class="fas fa-route"></i>
+                        <div class="stat-icon">
+                            <i class="fas fa-leaf"></i>
                         </div>
-                        <div class="stat-number" id="totalDistance">0</div>
-                        <div class="stat-label">Km Traveled</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon rating">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-number" id="averageRating">5.0</div>
-                        <div class="stat-label">Average Rating</div>
+                        <div class="stat-number" id="wasteReduced">0</div>
+                        <div class="stat-label">Kg Waste Prevented</div>
                     </div>
                 </div>
 
-                <!-- Available Pickup Requests -->
+                <!-- Recent Available Donations -->
                 <div>
-                    <h2 style="margin-bottom: 1rem;">Available Pickup Requests</h2>
-                    <div id="availableRequests" class="requests-grid">
+                    <h2 style="margin-bottom: 1rem;">Recent Available Donations</h2>
+                    <div id="recentDonations" class="donations-grid">
                         <div class="loading">
                             <i class="fas fa-spinner"></i>
-                            <p>Loading pickup requests...</p>
+                            <p>Loading donations...</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- All Pickup Requests Section -->
-            <div id="requests" class="content-section">
-                <h1 class="page-title">All Pickup Requests</h1>
-                <p class="page-subtitle">Browse and accept pickup requests in your area</p>
+            <!-- All Donations Section -->
+            <div id="donations" class="content-section">
+                <h1 class="page-title">All Donations</h1>
+                <p class="page-subtitle">View and manage all food donations in the system</p>
 
-                <div id="allRequests" class="requests-grid">
+                <!-- Filters -->
+                <div class="filters">
+                    <select class="filter-select" id="statusFilter" onchange="filterDonations()">
+                        <option value="">All Status</option>
+                        <option value="available">Available</option>
+                        <option value="picked">Picked Up</option>
+                        <option value="completed">Completed</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                    <select class="filter-select" id="typeFilter" onchange="filterDonations()">
+                        <option value="">All Food Types</option>
+                        <option value="cooked">Cooked Food</option>
+                        <option value="raw">Raw Ingredients</option>
+                        <option value="packaged">Packaged Food</option>
+                        <option value="fruits">Fruits & Vegetables</option>
+                    </select>
+                </div>
+
+                <div id="allDonations" class="donations-grid">
                     <div class="loading">
                         <i class="fas fa-spinner"></i>
-                        <p>Loading all pickup requests...</p>
+                        <p>Loading all donations...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Active Deliveries Section -->
-            <div id="active" class="content-section">
-                <h1 class="page-title">Active Deliveries</h1>
-                <p class="page-subtitle">Track your current pickup and delivery tasks</p>
+            <!-- Manage Requests Section -->
+            <div id="manage" class="content-section">
+                <h1 class="page-title">Manage Distribution Requests</h1>
+                <p class="page-subtitle">Coordinate pickup and distribution of donations</p>
 
-                <div id="activeDeliveries" class="requests-grid">
+                <div id="manageDonations" class="donations-grid">
                     <div class="loading">
                         <i class="fas fa-spinner"></i>
-                        <p>Loading active deliveries...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Delivery History Section -->
-            <div id="history" class="content-section">
-                <h1 class="page-title">Delivery History</h1>
-                <p class="page-subtitle">View your completed deliveries and earnings</p>
-
-                <div id="deliveryHistory" class="requests-grid">
-                    <div class="loading">
-                        <i class="fas fa-spinner"></i>
-                        <p>Loading delivery history...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Earnings Section -->
-            <div id="earnings" class="content-section">
-                <h1 class="page-title">Earnings Summary</h1>
-                <p class="page-subtitle">Track your earnings and payment history</p>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <div class="stat-number" id="todayEarnings">₹0</div>
-                        <div class="stat-label">Today's Earnings</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-calendar-week"></i>
-                        </div>
-                        <div class="stat-number" id="weekEarnings">₹0</div>
-                        <div class="stat-label">This Week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div class="stat-number" id="monthEarnings">₹0</div>
-                        <div class="stat-label">This Month</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon deliveries">
-                            <i class="fas fa-truck"></i>
-                        </div>
-                        <div class="stat-number" id="monthDeliveries">0</div>
-                        <div class="stat-label">Deliveries This Month</div>
+                        <p>Loading managed donations...</p>
                     </div>
                 </div>
             </div>
 
             <!-- Profile Section -->
             <div id="profile" class="content-section">
-                <h1 class="page-title">Rider Profile</h1>
-                <p class="page-subtitle">Manage your rider information and vehicle details</p>
+                <h1 class="page-title">Organization Profile</h1>
+                <p class="page-subtitle">Manage your NGO information</p>
 
                 <form id="profileForm" style="max-width: 500px;">
                     <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Full Name</label>
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Organization Name</label>
                         <input type="text" id="profileName" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
                     </div>
                     <div style="margin-bottom: 1rem;">
@@ -614,19 +537,6 @@
                         <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Address</label>
                         <textarea id="profileAddress" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px; resize: vertical;"></textarea>
                     </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Vehicle Type</label>
-                        <select id="vehicleType" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
-                            <option value="motorcycle">Motorcycle</option>
-                            <option value="bicycle">Bicycle</option>
-                            <option value="car">Car</option>
-                            <option value="van">Van</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Vehicle Number</label>
-                        <input type="text" id="vehicleNumber" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
-                    </div>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i>
                         Update Profile
@@ -639,16 +549,15 @@
     <script>
         // Global variables
         let currentUser = null;
-        let pickupRequests = [];
-        let activeDeliveries = [];
-        let deliveryHistory = [];
+        let allDonations = [];
+        let filteredDonations = [];
 
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
             checkAuthentication();
         });
 
-        // Check if user is authenticated and has rider role
+        // Check if user is authenticated and has NGO role
         function checkAuthentication() {
             const token = localStorage.getItem('accessToken');
             if (!token) {
@@ -669,8 +578,8 @@
             })
             .then(data => {
                 currentUser = data.user;
-                if (currentUser.role !== 'rider') {
-                    alert('Access denied. This dashboard is for rider users only.');
+                if (currentUser.role !== 'ngo') {
+                    alert('Access denied. This dashboard is for NGO users only.');
                     window.location.href = 'login.html';
                     return;
                 }
@@ -696,39 +605,37 @@
                 document.getElementById('profileEmail').value = currentUser.email || '';
                 document.getElementById('profilePhone').value = currentUser.phone || '';
                 document.getElementById('profileAddress').value = currentUser.address || '';
-                document.getElementById('vehicleType').value = currentUser.vehicleType || 'motorcycle';
-                document.getElementById('vehicleNumber').value = currentUser.vehicleNumber || '';
             }
         }
 
         // Load dashboard data
         function loadDashboardData() {
-            loadPickupRequests();
-            updateStats();
+            loadAllDonations();
         }
 
-        // Load pickup requests
-        function loadPickupRequests() {
+        // Load all donations (NGOs can see all donations)
+        function loadAllDonations() {
             const token = localStorage.getItem('accessToken');
             
-            fetch('/api/rider/pickup-requests', {
+            fetch('/api/donations', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             })
             .then(response => response.json())
-            .then(data => {
-                pickupRequests = data.requests || [];
-                displayAvailableRequests();
-                displayAllRequests();
-                displayActiveDeliveries();
-                displayDeliveryHistory();
+            .then(donations => {
+                allDonations = donations;
+                filteredDonations = donations;
+                updateStats();
+                displayRecentDonations();
+                displayAllDonations();
+                displayManagedDonations();
             })
             .catch(error => {
-                console.error('Error loading pickup requests:', error);
-                document.getElementById('availableRequests').innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <p>Error loading pickup requests. Please refresh the page.</p>
+                console.error('Error loading donations:', error);
+                document.getElementById('recentDonations').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--muted);">
+                        <p>Error loading donations. Please refresh the page.</p>
                     </div>
                 `;
             });
@@ -736,206 +643,162 @@
 
         // Update statistics
         function updateStats() {
-            // Mock data for demonstration
-            const totalDeliveries = 47;
-            const totalEarnings = 12500;
-            const totalDistance = 340;
-            const averageRating = 4.8;
+            const availableDonations = allDonations.filter(d => d.status === 'available');
+            const completedDonations = allDonations.filter(d => d.status === 'completed');
+            const thisMonth = new Date();
+            thisMonth.setDate(1);
+            const monthlyDonations = allDonations.filter(d => new Date(d.createdAt) >= thisMonth);
+            
+            const totalWaste = allDonations.reduce((total, d) => total + (parseFloat(d.quantity) || 0), 0);
+            const peopleServed = completedDonations.length * 8; // Estimate 8 people per donation
 
-            document.getElementById('totalDeliveries').textContent = totalDeliveries;
-            document.getElementById('totalEarnings').textContent = `₹${totalEarnings}`;
-            document.getElementById('totalDistance').textContent = totalDistance;
-            document.getElementById('averageRating').textContent = averageRating;
-
-            // Earnings breakdown
-            document.getElementById('todayEarnings').textContent = '₹450';
-            document.getElementById('weekEarnings').textContent = '₹2,800';
-            document.getElementById('monthEarnings').textContent = '₹8,500';
-            document.getElementById('monthDeliveries').textContent = '23';
+            document.getElementById('totalAvailable').textContent = availableDonations.length;
+            document.getElementById('totalManaged').textContent = monthlyDonations.length;
+            document.getElementById('peopleServed').textContent = peopleServed;
+            document.getElementById('wasteReduced').textContent = Math.round(totalWaste);
         }
 
-        // Display available pickup requests
-        function displayAvailableRequests() {
-            const availableRequests = pickupRequests.filter(r => r.status === 'available').slice(0, 6);
-            const container = document.getElementById('availableRequests');
+        // Display recent available donations
+        function displayRecentDonations() {
+            const recentDonations = allDonations
+                .filter(d => d.status === 'available')
+                .slice(0, 6);
             
-            if (availableRequests.length === 0) {
+            const container = document.getElementById('recentDonations');
+            
+            if (recentDonations.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <i class="fas fa-truck" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No pickup requests available at the moment.</p>
+                        <i class="fas fa-heart" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                        <p>No available donations at the moment.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = availableRequests.map(request => createRequestCard(request, true)).join('');
+            container.innerHTML = recentDonations.map(donation => createDonationCard(donation, true)).join('');
         }
 
-        // Display all pickup requests
-        function displayAllRequests() {
-            const container = document.getElementById('allRequests');
+        // Display all donations with filters
+        function displayAllDonations() {
+            const container = document.getElementById('allDonations');
             
-            if (pickupRequests.length === 0) {
+            if (filteredDonations.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
                         <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No pickup requests available.</p>
+                        <p>No donations match your filters.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = pickupRequests.map(request => createRequestCard(request, request.status === 'available')).join('');
+            container.innerHTML = filteredDonations.map(donation => createDonationCard(donation, false)).join('');
         }
 
-        // Display active deliveries
-        function displayActiveDeliveries() {
-            const activeRequests = pickupRequests.filter(r => r.status === 'picked' || r.status === 'in_transit');
-            const container = document.getElementById('activeDeliveries');
+        // Display managed donations
+        function displayManagedDonations() {
+            const managedDonations = allDonations.filter(d => d.status !== 'available');
+            const container = document.getElementById('manageDonations');
             
-            if (activeRequests.length === 0) {
+            if (managedDonations.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
                         <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No active deliveries at the moment.</p>
+                        <p>No managed donations yet.</p>
                     </div>
                 `;
                 return;
             }
 
-            container.innerHTML = activeRequests.map(request => createRequestCard(request, false, true)).join('');
+            container.innerHTML = managedDonations.map(donation => createDonationCard(donation, false)).join('');
         }
 
-        // Display delivery history
-        function displayDeliveryHistory() {
-            const completedRequests = pickupRequests.filter(r => r.status === 'completed');
-            const container = document.getElementById('deliveryHistory');
-            
-            if (completedRequests.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No completed deliveries yet.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = completedRequests.map(request => createRequestCard(request, false, false, true)).join('');
-        }
-
-        // Create request card HTML
-        function createRequestCard(request, showAcceptAction = false, showDeliveryActions = false, isHistory = false) {
-            const priorityClass = {
-                'high': 'priority-high',
-                'medium': 'priority-medium',
-                'low': 'priority-low'
-            }[request.priority || 'medium'];
-
-            const priorityText = {
-                'high': 'High Priority',
-                'medium': 'Medium Priority',
-                'low': 'Low Priority'
-            }[request.priority || 'medium'];
-
+        // Create donation card HTML
+        function createDonationCard(donation, showActions = false) {
             const statusClass = {
                 'available': 'status-available',
-                'picked': 'status-in-progress',
-                'in_transit': 'status-in-progress',
-                'completed': 'status-completed'
-            }[request.status] || 'status-available';
+                'picked': 'status-picked',
+                'completed': 'status-completed',
+                'expired': 'status-expired'
+            }[donation.status] || 'status-available';
 
-            // Calculate estimated distance and earnings
-            const estimatedDistance = Math.floor(Math.random() * 15) + 2; // 2-17 km
-            const estimatedEarnings = estimatedDistance * 15; // ₹15 per km
-            const estimatedTime = Math.ceil(estimatedDistance / 20 * 60); // minutes
+            const statusText = {
+                'available': 'Available',
+                'picked': 'Picked Up',
+                'completed': 'Completed',
+                'expired': 'Expired'
+            }[donation.status] || 'Available';
+
+            const expiryDate = new Date(donation.expiryDateTime);
+            const isExpiringSoon = expiryDate - new Date() < 24 * 60 * 60 * 1000; // 24 hours
 
             return `
-                <div class="request-card">
-                    <div class="status-indicator ${statusClass}"></div>
-                    <div class="request-header">
-                        <div class="request-title">${request.foodType}</div>
-                        <div class="priority-badge ${priorityClass}">${priorityText}</div>
+                <div class="donation-card">
+                    <div class="donation-header">
+                        <div class="donation-title">${donation.foodType}</div>
+                        <div class="status-badge ${statusClass}">${statusText}</div>
                     </div>
-                    <div class="request-details">
+                    <div class="donation-details">
                         <div class="detail-row">
                             <span class="detail-label">Donor:</span>
-                            <span class="detail-value">${request.donorName}</span>
+                            <span class="detail-value">${donation.donorName}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Quantity:</span>
-                            <span class="detail-value">${request.quantity}</span>
+                            <span class="detail-value">${donation.quantity}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Pickup Time:</span>
-                            <span class="detail-value">${new Date(request.pickupTime).toLocaleString()}</span>
+                            <span class="detail-value">${new Date(donation.pickupTime).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Expires:</span>
+                            <span class="detail-value ${isExpiringSoon ? 'text-danger' : ''}">${expiryDate.toLocaleString()}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Location:</span>
-                            <span class="detail-value">${request.address}</span>
+                            <span class="detail-value">${donation.address}</span>
                         </div>
                         <div class="detail-row">
                             <span class="detail-label">Contact:</span>
-                            <span class="detail-value">${request.contactNumber}</span>
+                            <span class="detail-value">${donation.contactNumber}</span>
                         </div>
+                        ${donation.notes ? `
                         <div class="detail-row">
-                            <span class="detail-label">Distance:</span>
-                            <span class="detail-value">
-                                <span class="distance-badge">${estimatedDistance} km</span>
-                            </span>
+                            <span class="detail-label">Notes:</span>
+                            <span class="detail-value">${donation.notes}</span>
                         </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Estimated Earnings:</span>
-                            <span class="detail-value" style="color: var(--green); font-weight: 700;">₹${estimatedEarnings}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Est. Time:</span>
-                            <span class="detail-value">${estimatedTime} mins</span>
-                        </div>
+                        ` : ''}
                     </div>
-                    ${showAcceptAction ? `
-                    <div class="request-actions">
-                        <button class="btn btn-primary" onclick="acceptRequest('${request._id}')">
-                            <i class="fas fa-check"></i>
-                            Accept Request
+                    ${showActions && donation.status === 'available' ? `
+                    <div class="donation-actions">
+                        <button class="btn btn-primary" onclick="claimDonation('${donation._id}')">
+                            <i class="fas fa-hand-paper"></i>
+                            Claim for Distribution
                         </button>
-                        <button class="btn btn-secondary" onclick="viewLocation('${request.address}')">
-                            <i class="fas fa-map-marker-alt"></i>
-                            View Location
-                        </button>
-                    </div>
-                    ` : ''}
-                    ${showDeliveryActions ? `
-                    <div class="request-actions">
-                        <button class="btn btn-success" onclick="markPickedUp('${request._id}')">
-                            <i class="fas fa-box"></i>
-                            Mark Picked Up
-                        </button>
-                        <button class="btn btn-primary" onclick="markDelivered('${request._id}')">
-                            <i class="fas fa-check-circle"></i>
-                            Mark Delivered
-                        </button>
-                        <button class="btn btn-secondary" onclick="contactDonor('${request.contactNumber}')">
+                        <button class="btn btn-secondary" onclick="contactDonor('${donation.contactNumber}')">
                             <i class="fas fa-phone"></i>
-                            Call Donor
+                            Contact Donor
                         </button>
-                    </div>
-                    ` : ''}
-                    ${isHistory ? `
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--accent-2);">
-                        <div class="detail-row">
-                            <span class="detail-label">Completed:</span>
-                            <span class="detail-value">${new Date(request.completedAt || request.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Earnings:</span>
-                            <span class="detail-value" style="color: var(--green); font-weight: 700;">₹${estimatedEarnings}</span>
-                        </div>
                     </div>
                     ` : ''}
                 </div>
             `;
+        }
+
+        // Filter donations
+        function filterDonations() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+
+            filteredDonations = allDonations.filter(donation => {
+                const statusMatch = !statusFilter || donation.status === statusFilter;
+                const typeMatch = !typeFilter || donation.foodType.toLowerCase().includes(typeFilter.toLowerCase());
+                return statusMatch && typeMatch;
+            });
+
+            displayAllDonations();
         }
 
         // Show different sections
@@ -957,35 +820,12 @@
             event.target.closest('.nav-item').classList.add('active');
         }
 
-        // Accept pickup request
-        function acceptRequest(requestId) {
-            if (confirm('Are you sure you want to accept this pickup request?')) {
-                alert('Request accepted! Please proceed to the pickup location.');
-                // Here you would typically make an API call to update the request status
-                loadPickupRequests();
+        // Claim donation for distribution
+        function claimDonation(donationId) {
+            if (confirm('Are you sure you want to claim this donation for distribution?')) {
+                alert('Donation claimed successfully! Please coordinate with the donor for pickup.');
+                loadAllDonations();
             }
-        }
-
-        // Mark as picked up
-        function markPickedUp(requestId) {
-            if (confirm('Confirm that you have picked up the food donation?')) {
-                alert('Pickup confirmed! Please proceed to deliver to the designated location.');
-                loadPickupRequests();
-            }
-        }
-
-        // Mark as delivered
-        function markDelivered(requestId) {
-            if (confirm('Confirm that the food has been successfully delivered?')) {
-                alert('Delivery completed! Earnings have been added to your account.');
-                loadPickupRequests();
-            }
-        }
-
-        // View location on map
-        function viewLocation(address) {
-            const encodedAddress = encodeURIComponent(address);
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
         }
 
         // Contact donor
@@ -1005,9 +845,7 @@
             const formData = {
                 name: document.getElementById('profileName').value,
                 phone: document.getElementById('profilePhone').value,
-                address: document.getElementById('profileAddress').value,
-                vehicleType: document.getElementById('vehicleType').value,
-                vehicleNumber: document.getElementById('vehicleNumber').value
+                address: document.getElementById('profileAddress').value
             };
 
             fetch('/api/profile', {
