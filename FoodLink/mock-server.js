@@ -12,9 +12,22 @@ const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || "test-secret-key";
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5000', 'http://127.0.0.1:5000', 'http://localhost:3000'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Add security headers
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  next();
+});
+
 app.use(express.static(path.join(__dirname, "../")));
 
 // Mock database
@@ -250,6 +263,18 @@ app.get("/api/donations", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error fetching donations:", error);
     res.status(500).json({ message: "Failed to fetch donations due to a server error." });
+  }
+});
+
+// Google OAuth endpoint (mock/disabled)
+app.post("/api/auth/google-signin", async (req, res) => {
+  try {
+    res.status(400).json({ 
+      message: "Google Sign-In is currently disabled. Please use email/password login instead.",
+      error: "GOOGLE_OAUTH_DISABLED"
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Google Sign-In error." });
   }
 });
 
