@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 5000;
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const JWT_SECRET = process.env.JWT_SECRET;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/anndan";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017/foodlink";
 const EMAIL_SERVICE = process.env.EMAIL_SERVICE;
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;

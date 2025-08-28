@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test FoodLink Server</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>FoodLink Server Test</h1>
+    
+    <h2>Test Server Connection</h2>
+    <button onclick="testServer()">Test Server</button>
+    <div id="server-result"></div>
+    
+    <h2>Test User Signup</h2>
+    <button onclick="testSignup()">Test Signup (Donator)</button>
+    <button onclick="testSignupRider()">Test Signup (Rider)</button>
+    <button onclick="testSignupNGO()">Test Signup (NGO)</button>
+    <div id="signup-result"></div>
+    
+    <h2>Test User Login</h2>
+    <button onclick="testLogin()">Test Login (Donator)</button>
+    <div id="login-result"></div>
+    
+    <h2>Test Dashboard Access</h2>
+    <button onclick="testDashboard()">Test Dashboard</button>
+    <div id="dashboard-result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        let testToken = null;
+
+        async function testServer() {
+            const resultDiv = document.getElementById('server-result');
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                const text = await response.text();
+                resultDiv.innerHTML = `<div class="result success">Server Response: ${text}</div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testSignup() {
+            const resultDiv = document.getElementById('signup-result');
+            try {
+                const response = await fetch(`${API_BASE}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Test Donator',
+                        username: 'testdonator',
+                        email: 'donator@test.com',
+                        password: 'password123',
+                        role: 'user'
+                    })
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="result ${response.ok ? 'success' : 'error'}">
+                    Status: ${response.status}<br>
+                    Message: ${data.message}
+                </div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testSignupRider() {
+            const resultDiv = document.getElementById('signup-result');
+            try {
+                const response = await fetch(`${API_BASE}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Test Rider',
+                        username: 'testrider',
+                        email: 'rider@test.com',
+                        password: 'password123',
+                        role: 'rider'
+                    })
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="result ${response.ok ? 'success' : 'error'}">
+                    Status: ${response.status}<br>
+                    Message: ${data.message}
+                </div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testSignupNGO() {
+            const resultDiv = document.getElementById('signup-result');
+            try {
+                const response = await fetch(`${API_BASE}/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: 'Test NGO',
+                        username: 'testngo',
+                        email: 'ngo@test.com',
+                        password: 'password123',
+                        role: 'ngo'
+                    })
+                });
+                const data = await response.json();
+                resultDiv.innerHTML = `<div class="result ${response.ok ? 'success' : 'error'}">
+                    Status: ${response.status}<br>
+                    Message: ${data.message}
+                </div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultDiv = document.getElementById('login-result');
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: 'donator@test.com',
+                        password: 'password123'
+                    })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    testToken = data.token;
+                    resultDiv.innerHTML = `<div class="result success">
+                        Login Successful!<br>
+                        User: ${data.user.name} (${data.user.role})<br>
+                        Token stored for dashboard test.
+                    </div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="result error">
+                        Status: ${response.status}<br>
+                        Message: ${data.message}
+                    </div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function testDashboard() {
+            const resultDiv = document.getElementById('dashboard-result');
+            if (!testToken) {
+                resultDiv.innerHTML = `<div class="result error">Please login first to get a token</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/user/dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${testToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `<div class="result ${response.ok ? 'success' : 'error'}">
+                    Status: ${response.status}<br>
+                    Message: ${data.message}<br>
+                    ${response.ok ? `Stats: ${JSON.stringify(data.stats)}` : ''}
+                </div>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
