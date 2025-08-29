@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FoodLink NGO Hub (Interactive)</title>
+<title>FoodLink NGO Hub (Database Integrated)</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -184,6 +184,36 @@
     .btn-simulate { background-color: var(--accent-color); color: #fff; }
     .btn-simulate:hover { background-color: #e65100; }
 
+    /* Status indicators */
+    .status-pill {
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        color: #fff;
+    }
+    .status-pill.pending { background: var(--accent-color); }
+    .status-pill.assigned { background: var(--primary-color); }
+    .status-pill.picked_up { background: #9c27b0; }
+    .status-pill.completed { background: var(--success-color); }
+
+    /* Rider info */
+    .rider-info {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        font-size: 0.9rem;
+    }
+    .rider-info .rider-name {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+    .rider-info .rider-phone {
+        color: var(--text-light);
+        margin-left: 0.5rem;
+    }
+
     /* Active Deliveries */
     #current-crew-name {
         font-size: 0.8rem;
@@ -204,25 +234,6 @@
         transition: background 0.2s;
     }
     .btn-swap-crew:hover { background: #1a2520; }
-    .delivery-card .rider-info {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-        font-size: 0.9rem;
-        color: var(--text-dark);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-    .status-pill {
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.25rem 0.75rem;
-        border-radius: 999px;
-        color: #fff;
-    }
-    .status-pill.in-transit { background: var(--accent-color); }
-    .status-pill.completed { background: var(--success-color); }
 
     /* Stat Cards */
     .stats-panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
@@ -312,7 +323,7 @@
     
     <div class="panel">
         <div class="panel-header">
-            <h2><i class="fa-solid fa-inbox"></i> Incoming Donations</h2>
+            <h2><i class="fa-solid fa-inbox"></i> Donation Requests</h2>
             <div class="filter-buttons" id="filter-buttons">
                 <button class="filter-btn active" data-filter="all">All</button>
                 <button class="filter-btn" data-filter="veg">Veg</button>
@@ -320,7 +331,10 @@
             </div>
         </div>
         <div class="request-list" id="request-list">
+            <div class="text-center py-4">
+                <p class="text-gray-500">Loading donation requests...</p>
             </div>
+        </div>
     </div>
 
     <div class="panel">
@@ -332,7 +346,10 @@
             </div>
         </div>
         <div class="delivery-list" id="delivery-list">
-             </div>
+            <div class="text-center py-4">
+                <p class="text-gray-500">Loading active deliveries...</p>
+            </div>
+        </div>
     </div>
 
     <div class="panel full-width-panel">
@@ -343,7 +360,10 @@
     <div class="panel full-width-panel">
         <h2><i class="fa-solid fa-clock-rotate-left"></i> Recent Activity Log</h2>
         <div class="activity-log" id="activity-log">
+            <div class="text-center py-4">
+                <p class="text-gray-500">Loading recent activities...</p>
             </div>
+        </div>
     </div>
 </main>
 
@@ -367,7 +387,7 @@
 </div>
 
 <div class="modal" id="logout-modal">
-     <div class="modal-header">
+    <div class="modal-header">
         <h2><i class="fa-solid fa-right-from-bracket"></i> Confirm Logout</h2>
         <button class="modal-close-btn">&times;</button>
     </div>
@@ -379,7 +399,7 @@
 </div>
 
 <div class="modal" id="ai-modal">
-     <div class="modal-header">
+    <div class="modal-header">
         <h2><i class="fa-solid fa-brain"></i> AI Recommendation</h2>
         <button class="modal-close-btn">&times;</button>
     </div>
@@ -391,7 +411,591 @@
 
 <div id="toast" class="toast"></div>
 
-<script src="ngo.js" defer></script>
+<script>
+// FoodLink Database System - Simulated Real-time Database
+class FoodLinkDatabase {
+    constructor() {
+        this.storageKey = 'foodlink_database';
+        this.listeners = {};
+        this.initializeDatabase();
+        this.setupStorageListener();
+    }
+
+    initializeDatabase() {
+        if (!localStorage.getItem(this.storageKey)) {
+            const initialData = {
+                donations: [],
+                riders: [
+                    {
+                        id: 1,
+                        name: 'Rajesh Kumar',
+                        phone: '+91 9876543210',
+                        location: { lat: 22.3072, lng: 73.1812 },
+                        isOnline: false,
+                        currentOrders: [],
+                        completedOrders: [],
+                        totalPoints: 12500,
+                        todayPoints: 0,
+                        todayCollections: 0,
+                        rating: 4.9
+                    },
+                    {
+                        id: 2,
+                        name: 'Amit Patel',
+                        phone: '+91 9876543211',
+                        location: { lat: 22.3200, lng: 73.1900 },
+                        isOnline: false,
+                        currentOrders: [],
+                        completedOrders: [],
+                        totalPoints: 8500,
+                        todayPoints: 0,
+                        todayCollections: 0,
+                        rating: 4.7
+                    },
+                    {
+                        id: 3,
+                        name: 'Priya Sharma',
+                        phone: '+91 9876543212',
+                        location: { lat: 22.2950, lng: 73.1650 },
+                        isOnline: false,
+                        currentOrders: [],
+                        completedOrders: [],
+                        totalPoints: 15200,
+                        todayPoints: 0,
+                        todayCollections: 0,
+                        rating: 4.8
+                    }
+                ],
+                ngos: [
+                    {
+                        id: 1,
+                        name: 'Helping Hands NGO',
+                        location: 'Vadodara City',
+                        mealsServed: 25000,
+                        totalContributions: 1500,
+                        rewards: 120
+                    }
+                ],
+                activityLog: [],
+                lastUpdated: Date.now()
+            };
+            this.saveData(initialData);
+        }
+    }
+
+    setupStorageListener() {
+        window.addEventListener('storage', (e) => {
+            if (e.key === this.storageKey && e.newValue) {
+                const data = JSON.parse(e.newValue);
+                this.notifyListeners('dataChanged', data);
+            }
+        });
+    }
+
+    getData() {
+        const data = localStorage.getItem(this.storageKey);
+        return data ? JSON.parse(data) : null;
+    }
+
+    saveData(data) {
+        data.lastUpdated = Date.now();
+        localStorage.setItem(this.storageKey, JSON.stringify(data));
+        window.dispatchEvent(new CustomEvent('foodlinkDataUpdate', { detail: data }));
+    }
+
+    addDonationRequest(donation) {
+        const data = this.getData();
+        const newDonation = {
+            id: Date.now(),
+            ngoId: 1,
+            ngoName: 'Helping Hands NGO',
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            assignedRider: null,
+            ...donation
+        };
+        
+        data.donations.push(newDonation);
+        this.addActivityLog(`New donation request: ${newDonation.foodType} from ${newDonation.donorName}`, 'donation');
+        this.saveData(data);
+        return newDonation;
+    }
+
+    assignDonationToRider(donationId, riderId) {
+        const data = this.getData();
+        const donationIndex = data.donations.findIndex(d => d.id === donationId);
+        const riderIndex = data.riders.findIndex(r => r.id === riderId);
+        
+        if (donationIndex !== -1 && riderIndex !== -1) {
+            data.donations[donationIndex].status = 'assigned';
+            data.donations[donationIndex].assignedRider = data.riders[riderIndex];
+            data.donations[donationIndex].assignedAt = new Date().toISOString();
+            
+            data.riders[riderIndex].currentOrders.push({
+                ...data.donations[donationIndex],
+                status: 'accepted'
+            });
+            
+            this.addActivityLog(`${data.riders[riderIndex].name} accepted pickup from ${data.donations[donationIndex].donorName}`, 'assignment');
+            this.saveData(data);
+            return true;
+        }
+        return false;
+    }
+
+    updateDeliveryStatus(donationId, status, riderId) {
+        const data = this.getData();
+        const donationIndex = data.donations.findIndex(d => d.id === donationId);
+        const riderIndex = data.riders.findIndex(r => r.id === riderId);
+        
+        if (donationIndex !== -1 && riderIndex !== -1) {
+            data.donations[donationIndex].status = status;
+            data.donations[donationIndex].updatedAt = new Date().toISOString();
+            
+            const rider = data.riders[riderIndex];
+            const orderIndex = rider.currentOrders.findIndex(o => o.id === donationId);
+            
+            if (orderIndex !== -1) {
+                rider.currentOrders[orderIndex].status = status;
+                
+                if (status === 'completed') {
+                    const completedOrder = rider.currentOrders.splice(orderIndex, 1)[0];
+                    rider.completedOrders.push(completedOrder);
+                    
+                    const points = completedOrder.points || 25;
+                    rider.todayPoints += points;
+                    rider.totalPoints += points;
+                    rider.todayCollections += 1;
+                    
+                    data.ngos[0].mealsServed += Math.floor(Math.random() * 10) + 5;
+                    data.ngos[0].totalContributions += 1;
+                    
+                    this.addActivityLog(`Delivery completed by ${rider.name} - ${completedOrder.donorName}`, 'completion');
+                } else if (status === 'picked_up') {
+                    this.addActivityLog(`Food picked up by ${rider.name} from ${data.donations[donationIndex].donorName}`, 'pickup');
+                }
+            }
+            
+            this.saveData(data);
+            return true;
+        }
+        return false;
+    }
+
+    updateRiderStatus(riderId, isOnline) {
+        const data = this.getData();
+        const riderIndex = data.riders.findIndex(r => r.id === riderId);
+        
+        if (riderIndex !== -1) {
+            data.riders[riderIndex].isOnline = isOnline;
+            this.addActivityLog(`${data.riders[riderIndex].name} went ${isOnline ? 'online' : 'offline'}`, 'status');
+            this.saveData(data);
+            return true;
+        }
+        return false;
+    }
+
+    getAvailableDonations() {
+        const data = this.getData();
+        return data.donations.filter(d => d.status === 'pending');
+    }
+
+    getDonationsByNgo(ngoId) {
+        const data = this.getData();
+        return data.donations.filter(d => d.ngoId === ngoId);
+    }
+
+    getActiveDeliveries(ngoId) {
+        const data = this.getData();
+        return data.donations.filter(d => d.ngoId === ngoId && ['assigned', 'picked_up'].includes(d.status));
+    }
+
+    getRider(riderId) {
+        const data = this.getData();
+        return data.riders.find(r => r.id === riderId);
+    }
+
+    getOnlineRiders() {
+        const data = this.getData();
+        return data.riders.filter(r => r.isOnline);
+    }
+
+    addActivityLog(message, type) {
+        const data = this.getData();
+        data.activityLog.unshift({
+            id: Date.now(),
+            message,
+            type,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (data.activityLog.length > 50) {
+            data.activityLog = data.activityLog.slice(0, 50);
+        }
+    }
+
+    getActivityLog(limit = 10) {
+        const data = this.getData();
+        return data.activityLog.slice(0, limit);
+    }
+
+    subscribe(event, callback) {
+        if (!this.listeners[event]) {
+            this.listeners[event] = [];
+        }
+        this.listeners[event].push(callback);
+        
+        window.addEventListener('foodlinkDataUpdate', (e) => {
+            if (event === 'dataChanged') {
+                callback(e.detail);
+            }
+        });
+    }
+
+    notifyListeners(event, data) {
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(callback => callback(data));
+        }
+    }
+
+    generateMockDonation() {
+        const donors = [
+            { name: 'Priya Sharma', phone: '9876543210', address: '123, Sampatrao Colony, Jagnath Plot' },
+            { name: 'Amit Patel', phone: '9876543211', address: 'Hotel Grand Mercure, Sayajigunj' },
+            { name: 'Sunita Mehta', phone: '9876543212', address: '789, Gotri Road, Akota' },
+            { name: 'Raj Hotel', phone: '9876543213', address: '456, RC Dutt Road, Alkapuri' },
+            { name: 'Maya Restaurant', phone: '9876543214', address: '321, Fatehgunj Main Road' }
+        ];
+        
+        const foodTypes = [
+            { type: 'Cooked Rice & Dal', diet: 'veg', servings: '50-60', points: 30 },
+            { type: 'Mixed Vegetable Curry', diet: 'veg', servings: '30-40', points: 25 },
+            { type: 'Chicken Curry & Rice', diet: 'non-veg', servings: '40-50', points: 35 },
+            { type: 'Fresh Fruits & Snacks', diet: 'veg', servings: '20-30', points: 20 },
+            { type: 'Bread & Sabzi', diet: 'veg', servings: '60-70', points: 40 }
+        ];
+        
+        const donor = donors[Math.floor(Math.random() * donors.length)];
+        const food = foodTypes[Math.floor(Math.random() * foodTypes.length)];
+        
+        const baseLatLng = { lat: 22.3072, lng: 73.1812 };
+        const lat = baseLatLng.lat + (Math.random() - 0.5) * 0.1;
+        const lng = baseLatLng.lng + (Math.random() - 0.5) * 0.1;
+        
+        return {
+            donorName: donor.name,
+            donorPhone: donor.phone,
+            donorAddress: donor.address,
+            foodType: food.type,
+            dietType: food.diet,
+            servings: food.servings,
+            points: food.points,
+            coords: [lat, lng],
+            description: `Fresh ${food.type.toLowerCase()} available for pickup. Please collect within 2 hours.`,
+            distance: `${(Math.random() * 3 + 0.5).toFixed(1)}km`
+        };
+    }
+}
+
+// NGO Dashboard Application
+class NGODashboard {
+    constructor() {
+        this.db = new FoodLinkDatabase();
+        this.currentFilter = 'all';
+        this.chart = null;
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupDatabaseSubscription();
+        this.loadInitialData();
+        this.initializeChart();
+    }
+
+    setupEventListeners() {
+        // Simulate donation button
+        document.getElementById('simulate-btn').addEventListener('click', () => {
+            this.simulateDonation();
+        });
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.setFilter(e.target.dataset.filter);
+            });
+        });
+
+        // Profile and logout links
+        document.getElementById('profile-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showModal('profile-modal');
+        });
+
+        document.getElementById('logout-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showModal('logout-modal');
+        });
+
+        document.getElementById('btn-confirm-logout').addEventListener('click', () => {
+            this.logout();
+        });
+
+        // Modal close buttons
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.closeModal();
+            });
+        });
+
+        // Modal overlay click
+        document.getElementById('modal-overlay').addEventListener('click', () => {
+            this.closeModal();
+        });
+    }
+
+    setupDatabaseSubscription() {
+        this.db.subscribe('dataChanged', (data) => {
+            this.updateDashboard(data);
+        });
+    }
+
+    loadInitialData() {
+        const data = this.db.getData();
+        this.updateDashboard(data);
+    }
+
+    updateDashboard(data) {
+        this.updateStats(data.ngos[0]);
+        this.renderDonationRequests(data.donations);
+        this.renderActiveDeliveries(data.donations);
+        this.renderActivityLog(data.activityLog);
+    }
+
+    updateStats(ngoData) {
+        document.getElementById('meals-served').textContent = `${ngoData.mealsServed.toLocaleString()}+`;
+        document.getElementById('contributions').textContent = `${ngoData.totalContributions.toLocaleString()}+`;
+        document.getElementById('rewards').textContent = ngoData.rewards;
+
+        // Update profile modal
+        document.getElementById('profile-meals-served').textContent = `${ngoData.mealsServed.toLocaleString()}+`;
+        document.getElementById('profile-contributions').textContent = `${ngoData.totalContributions.toLocaleString()}+`;
+        document.getElementById('profile-rewards').textContent = ngoData.rewards;
+    }
+
+    renderDonationRequests(donations) {
+        const container = document.getElementById('request-list');
+        const filteredDonations = this.filterDonations(donations.filter(d => d.status === 'pending'));
+
+        if (filteredDonations.length === 0) {
+            container.innerHTML = '<div class="text-center py-4"><p class="text-gray-500">No pending donation requests.</p></div>';
+            return;
+        }
+
+        container.innerHTML = filteredDonations.map(donation => `
+            <div class="request-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fa-solid fa-utensils"></i>
+                        ${donation.foodType}
+                    </h3>
+                    <span class="diet-tag ${donation.dietType}">${donation.dietType === 'veg' ? 'VEG' : 'NON-VEG'}</span>
+                </div>
+                <p><i class="fa-solid fa-user"></i> ${donation.donorName}</p>
+                <p><i class="fa-solid fa-phone"></i> ${donation.donorPhone}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${donation.donorAddress}</p>
+                <p><i class="fa-solid fa-bowl-food"></i> Servings: ${donation.servings}</p>
+                <div class="description">${donation.description}</div>
+                <div class="btn-group">
+                    <button class="btn btn-ai" onclick="ngoApp.showAISuggestion('${donation.id}')">
+                        <i class="fa-solid fa-brain"></i>
+                    </button>
+                </div>
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: between; align-items: center;">
+                    <span class="status-pill ${donation.status}">${donation.status.toUpperCase()}</span>
+                    <span style="font-weight: 600; color: var(--primary-color);">${donation.points} pts</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderActiveDeliveries(donations) {
+        const container = document.getElementById('delivery-list');
+        const activeDeliveries = donations.filter(d => ['assigned', 'picked_up'].includes(d.status));
+
+        if (activeDeliveries.length === 0) {
+            container.innerHTML = '<div class="text-center py-4"><p class="text-gray-500">No active deliveries at the moment.</p></div>';
+            return;
+        }
+
+        container.innerHTML = activeDeliveries.map(delivery => `
+            <div class="delivery-card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fa-solid fa-utensils"></i>
+                        ${delivery.foodType}
+                    </h3>
+                    <span class="status-pill ${delivery.status}">${delivery.status.replace('_', ' ').toUpperCase()}</span>
+                </div>
+                <p><i class="fa-solid fa-user"></i> ${delivery.donorName}</p>
+                <p><i class="fa-solid fa-location-dot"></i> ${delivery.donorAddress}</p>
+                <p><i class="fa-solid fa-bowl-food"></i> Servings: ${delivery.servings}</p>
+                ${delivery.assignedRider ? `
+                    <div class="rider-info">
+                        <i class="fa-solid fa-motorcycle"></i>
+                        <span class="rider-name">${delivery.assignedRider.name}</span>
+                        <span class="rider-phone">${delivery.assignedRider.phone}</span>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+
+    renderActivityLog(activities) {
+        const container = document.getElementById('activity-log');
+        
+        if (activities.length === 0) {
+            container.innerHTML = '<div class="text-center py-4"><p class="text-gray-500">No recent activities.</p></div>';
+            return;
+        }
+
+        container.innerHTML = activities.slice(0, 10).map(activity => `
+            <div class="activity-item">
+                <div class="details">
+                    <p>${activity.message}</p>
+                    <span>${this.formatTime(activity.timestamp)}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    filterDonations(donations) {
+        if (this.currentFilter === 'all') return donations;
+        return donations.filter(d => d.dietType === this.currentFilter);
+    }
+
+    setFilter(filter) {
+        this.currentFilter = filter;
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.filter === filter);
+        });
+        const data = this.db.getData();
+        this.renderDonationRequests(data.donations);
+    }
+
+    simulateDonation() {
+        const donation = this.db.generateMockDonation();
+        this.db.addDonationRequest(donation);
+        this.showToast('🔔 New donation request added!');
+    }
+
+    showAISuggestion(donationId) {
+        const suggestions = [
+            "Priority: HIGH - Fresh food with high nutritional value. Recommend immediate dispatch to maximize impact.",
+            "Priority: MEDIUM - Standard pickup recommended. Suitable for evening distribution programs.",
+            "Priority: HIGH - Large quantity donation. Consider deploying multiple riders for efficient collection.",
+            "Priority: LOW - Small quantity. Can be combined with nearby pickups for cost efficiency.",
+            "Priority: URGENT - Perishable items detected. Recommend immediate pickup within 30 minutes."
+        ];
+        
+        const suggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+        document.getElementById('ai-suggestion-text').textContent = suggestion;
+        this.showModal('ai-modal');
+    }
+
+    initializeChart() {
+        const ctx = document.getElementById('contributionsChart').getContext('2d');
+        const data = {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Contributions',
+                data: [12, 19, 15, 25, 22, 30, 28],
+                borderColor: 'rgb(33, 150, 243)',
+                backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                tension: 0.4
+            }]
+        };
+
+        this.chart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    showModal(modalId) {
+        const overlay = document.getElementById('modal-overlay');
+        const modal = document.getElementById(modalId);
+        
+        overlay.classList.add('active');
+        modal.classList.add('active');
+        
+        setTimeout(() => {
+            overlay.classList.add('visible');
+            modal.classList.add('visible');
+        }, 10);
+    }
+
+    closeModal() {
+        const overlay = document.getElementById('modal-overlay');
+        const modals = document.querySelectorAll('.modal');
+        
+        overlay.classList.remove('visible');
+        modals.forEach(modal => modal.classList.remove('visible'));
+        
+        setTimeout(() => {
+            overlay.classList.remove('active');
+            modals.forEach(modal => modal.classList.remove('active'));
+        }, 300);
+    }
+
+    showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    formatTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffMins < 1440) return `${Math.floor(diffMins / 60)}h ago`;
+        return date.toLocaleDateString();
+    }
+
+    logout() {
+        this.showToast('👋 Logged out successfully');
+        this.closeModal();
+        setTimeout(() => {
+            window.location.reload();
+        }, 1500);
+    }
+}
+
+// Initialize the application
+const ngoApp = new NGODashboard();
+</script>
 
 </body>
 </html>
