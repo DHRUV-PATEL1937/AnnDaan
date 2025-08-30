@@ -131,18 +131,39 @@ app.get("/", (req, res) => {
   );
 });
 
-// ⭐ --- UPDATED SIGNUP ROUTE WITH ROLE SELECTION --- ⭐
+// ⭐ --- NEW: ROUTE TO CHECK IF USER EXISTS --- ⭐
+app.post("/api/auth/check-user", async (req, res) => {
+  try {
+    const { email, username } = req.body;
+
+    if (!email && !username) {
+      return res.status(400).json({ message: "Email or username is required." });
+    }
+
+    const query = [];
+    if (email) query.push({ email: email });
+    if (username) query.push({ username: username });
+
+    const existingUser = await User.findOne({
+      $or: query,
+      isEmailVerified: true,
+    });
+
+    res.status(200).json({
+      emailExists: existingUser ? existingUser.email === email : false,
+      usernameExists: existingUser ? existingUser.username === username : false,
+    });
+  } catch (error) {
+    console.error("❌ User check error:", error);
+    res.status(500).json({ message: "Server error during user check." });
+  }
+});
+
+// ⭐ --- UPDATED SIGNUP ROUTE WITH PRE-VALIDATION --- ⭐
 app.post("/signup", async (req, res) => {
   try {
-    const { name, username, email, password, role } = req.body;
-
-    // Validate role
-    const validRoles = ["user", "ngo", "rider"];
-    if (!role || !validRoles.includes(role)) {
-      return res.status(400).json({
-        message: "Please select a valid role: user, ngo, or rider.",
-      });
-    }
+    const { name, username, email, password } = req.body;
+    const role = 'user'; // Assign 'user' as the default role for all new signups
 
     if (!name || !username || !email || !password || password.length < 6) {
       return res.status(400).json({
@@ -151,13 +172,13 @@ app.post("/signup", async (req, res) => {
       });
     }
 
-    // Check if a VERIFIED user already exists
+    // ⭐ FIX: Check for ANY user (verified or not) before proceeding.
     const existingUser = await User.findOne({
       $or: [{ email: email }, { username: username }],
-      isEmailVerified: true,
     });
 
     if (existingUser) {
+      // This now happens BEFORE sending the OTP.
       return res.status(409).json({
         message: "An account with this email or username already exists.",
       });
@@ -166,13 +187,13 @@ app.post("/signup", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create a temporary registration token with role
+    // Create a temporary registration token with the default role
     const registrationPayload = {
       name,
       username,
       email,
       password: hashedPassword,
-      role,
+      role, // Use the default role
       otp,
     };
     const registrationToken = jwt.sign(registrationPayload, JWT_SECRET, {
@@ -180,27 +201,24 @@ app.post("/signup", async (req, res) => {
     });
 
     // Send the OTP email
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       service: EMAIL_SERVICE,
       auth: { user: EMAIL_USER, pass: EMAIL_PASS },
     });
-
-    const roleDisplayName =
-      role === "user" ? "User" : role === "ngo" ? "NGO" : "Rider";
 
     const mailOptions = {
       to: email,
       from: `FoodLink <${EMAIL_USER}>`,
       subject: "Verify Your Email Address for FoodLink",
       html: `
-                <p>Welcome to FoodLink as a <strong>${roleDisplayName}</strong>!</p>
+                <p>Welcome to FoodLink!</p>
                 <p>Your One-Time Password (OTP) for email verification is: <strong>${otp}</strong></p>
                 <p>It will expire in 15 minutes.</p>
             `,
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Verification OTP sent to: ${email} (Role: ${role})`);
+    console.log(`✅ Verification OTP sent to: ${email} (Default Role: ${role})`);
 
     res.status(200).json({
       message: "A verification OTP has been sent to your email.",
@@ -391,6 +409,7 @@ function getDashboardUrl(role) {
   }
 }
 
+// ⭐ --- UPDATED GOOGLE SIGN-IN WITH ROLE SELECTION --- ⭐
 // ⭐ --- UPDATED GOOGLE SIGN-IN WITH ROLE SELECTION --- ⭐
 app.post("/api/auth/google-signin", async (req, res) => {
   try {
@@ -652,7 +671,8 @@ app.post("/api/auth/forgot-password", async (req, res) => {
     user.resetPasswordExpires = expiry;
     await user.save();
 
-    const transporter = nodemailer.createTransporter({
+    // Send the OTP email
+    const transporter = nodemailer.createTransport({
       service: EMAIL_SERVICE,
       auth: { user: EMAIL_USER, pass: EMAIL_PASS },
     });
@@ -985,6 +1005,8 @@ app.post("/api/auth/logout", authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Logout failed." });
   }
 });
+
+
 
 // --- 5. START THE SERVER ---
 app.listen(PORT, () => {

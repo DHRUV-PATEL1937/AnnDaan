@@ -248,27 +248,34 @@ class NeumorphismLoginForm {
         this.setLoading(true);
 
         try {
-            const res = await fetch('http://localhost:5000/api/auth/google-signin', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: response.credential }),
-            });
+        // Get the currently selected role from your UI. Defaults to 'user'.
+        const selectedRole = document.querySelector('.role-option.active')?.dataset.role || 'user';
 
-            const data = await res.json();
+        const res = await fetch('http://localhost:5000/api/auth/google-signin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            // Add the selected role to the request body
+            body: JSON.stringify({
+                token: response.credential,
+                role: selectedRole
+            }),
+        });
 
-            if (res.status === 202 && data.usernameRequired) {
-                this.tempToken = data.tempToken;
-                this.showUsernameModal();
-            } else if (res.ok) {
-                // ✅ FIX: Use the correct keys 'accessToken' and 'refreshToken'
-                localStorage.setItem('accessToken', data.accessToken);
-                localStorage.setItem('refreshToken', data.refreshToken);
-                localStorage.setItem('userName', data.user.name);
+        const data = await res.json();
 
-                this.showNeumorphicSuccess();
-            } else {
-                this.showServerError(data.message || 'Google Sign-In failed.');
-            }
+        if (res.status === 202 && data.usernameRequired) {
+            this.tempToken = data.tempToken;
+            this.showUsernameModal();
+        } else if (res.ok) {
+            // Use the correct keys 'accessToken' and 'refreshToken'
+            localStorage.setItem('accessToken', data.accessToken);
+            localStorage.setItem('refreshToken', data.refreshToken);
+            localStorage.setItem('userName', data.user.name);
+
+            this.showNeumorphicSuccess();
+        } else {
+            this.showServerError(data.message || 'Google Sign-In failed.');
+        }
         } catch (error) {
             this.showServerError('Could not connect to the server for Google Sign-In.');
         } finally {

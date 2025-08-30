@@ -28,8 +28,12 @@ class NeumorphismSignupForm {
         this.serverErrorMessage.id = 'serverErrorMessage';
         this.form.insertBefore(this.serverErrorMessage, this.submitButton.nextSibling); 
         
-        // ⭐ NEW: To store the temporary token from the server
-        this.registrationToken = null; 
+        this.registrationToken = null;
+        
+        // ⭐ NEW: Flags to track if user details are already taken
+        this.isEmailTaken = false;
+        this.isUsernameTaken = false;
+        
         this.init();
     }
     
@@ -44,15 +48,19 @@ class NeumorphismSignupForm {
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         this.otpForm.addEventListener('submit', (e) => this.handleOtpSubmit(e));
         
+        // Basic format validation on blur
         this.nameInput.addEventListener('blur', () => this.validateName());
-        this.usernameInput.addEventListener('blur', () => this.validateUsername());
-        this.emailInput.addEventListener('blur', () => this.validateEmail());
         this.passwordInput.addEventListener('blur', () => this.validatePassword());
         this.confirmPasswordInput.addEventListener('blur', () => this.validateConfirmPassword());
+
+        // ⭐ NEW: Server checks on blur for email and username
+        this.emailInput.addEventListener('blur', () => this.checkEmailAvailability());
+        this.usernameInput.addEventListener('blur', () => this.checkUsernameAvailability());
         
+        // Clear errors on input
         this.nameInput.addEventListener('input', () => this.clearError('name'));
-        this.usernameInput.addEventListener('input', () => this.clearError('username'));
         this.emailInput.addEventListener('input', () => this.clearError('email'));
+        this.usernameInput.addEventListener('input', () => this.clearError('username'));
         this.passwordInput.addEventListener('input', () => this.clearError('password'));
         this.confirmPasswordInput.addEventListener('input', () => this.clearError('confirmPassword'));
         
@@ -61,6 +69,98 @@ class NeumorphismSignupForm {
             input.addEventListener('blur', (e) => this.removeSoftPress(e));
         });
     }
+
+    // ⭐ NEW: Function to check if email is already registered
+    async checkEmailAvailability() {
+        if (!this.validateEmail()) return; // First, check if format is valid
+        
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/check-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: this.emailInput.value.trim() })
+            });
+            const data = await response.json();
+            if (data.emailExists) {
+                this.isEmailTaken = true;
+                this.showError('email', 'This email is already registered.');
+            } else {
+                this.isEmailTaken = false;
+            }
+        } catch (error) {
+            console.error('Email check failed:', error);
+            // Don't block signup for a failed check, the server will catch it
+        }
+    }
+
+    // ⭐ NEW: Function to check if username is already taken
+    async checkUsernameAvailability() {
+        if (!this.validateUsername()) return; // First, check if format is valid
+        
+        try {
+            const response = await fetch('http://localhost:5000/api/auth/check-user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: this.usernameInput.value.trim() })
+            });
+            const data = await response.json();
+            if (data.usernameExists) {
+                this.isUsernameTaken = true;
+                this.showError('username', 'This username is already taken.');
+            } else {
+                this.isUsernameTaken = false;
+            }
+        } catch (error) {
+            console.error('Username check failed:', error);
+        }
+    }
+    
+    async handleSubmit(e) {
+        e.preventDefault();
+        this.clearServerError();
+
+        // ⭐ UPDATED: Check format validity and availability flags before submitting
+        const isFormatValid = this.validateName() && this.validateUsername() && this.validateEmail() && this.validatePassword() && this.validateConfirmPassword();
+        
+        if (!isFormatValid || this.isEmailTaken || this.isUsernameTaken) {
+            this.animateSoftPress(this.submitButton);
+            this.showServerError('Please fix the errors in the form before submitting.');
+            return;
+        }
+        
+        this.setLoading(true, this.submitButton);
+        
+        const name = this.nameInput.value.trim();
+        const username = this.usernameInput.value.trim();
+        const email = this.emailInput.value.trim();
+        const password = this.passwordInput.value;
+
+        try {
+            const response = await fetch('http://localhost:5000/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.registrationToken = data.registrationToken;
+                this.mainContainer.style.display = 'none';
+                this.otpContainer.style.display = 'block';
+            } else {
+                this.showServerError(data.message || 'Signup failed.');
+                this.animateSoftPress(this.submitButton);
+            }
+        } catch (error) {
+            this.showServerError('Network error. Please check your connection.');
+            this.animateSoftPress(this.submitButton);
+        } finally {
+            this.setLoading(false, this.submitButton);
+        }
+    }
+    
+    // --- All other methods (OTP submit, helpers, etc.) remain the same ---
     
     setupPasswordToggle(input, toggle) {
         toggle.addEventListener('click', () => {
@@ -210,51 +310,6 @@ class NeumorphismSignupForm {
         this.serverErrorMessage.style.opacity = '0';
     }
     
-    async handleSubmit(e) {
-        e.preventDefault();
-        this.clearServerError();
-
-        const isValid = this.validateName() && this.validateUsername() && this.validateEmail() && this.validatePassword() && this.validateConfirmPassword();
-        
-        if (!isValid) {
-            this.animateSoftPress(this.submitButton);
-            this.showServerError('Please fix the errors in the form before submitting.');
-            return;
-        }
-        
-        this.setLoading(true, this.submitButton);
-        
-        const name = this.nameInput.value.trim();
-        const username = this.usernameInput.value.trim();
-        const email = this.emailInput.value.trim();
-        const password = this.passwordInput.value;
-
-        try {
-            const response = await fetch('http://localhost:5000/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, username, email, password })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // ⭐ STORE THE TEMPORARY TOKEN
-                this.registrationToken = data.registrationToken;
-                this.mainContainer.style.display = 'none';
-                this.otpContainer.style.display = 'block';
-            } else {
-                this.showServerError(data.message || 'Signup failed.');
-                this.animateSoftPress(this.submitButton);
-            }
-        } catch (error) {
-            this.showServerError('Network error. Please check your connection.');
-            this.animateSoftPress(this.submitButton);
-        } finally {
-            this.setLoading(false, this.submitButton);
-        }
-    }
-    
     async handleOtpSubmit(e) {
         e.preventDefault();
         const otp = this.otpInput.value.trim();
@@ -266,7 +321,6 @@ class NeumorphismSignupForm {
         this.setLoading(true, this.otpForm.querySelector('button'));
 
         try {
-            // ⭐ SEND THE OTP AND THE TEMPORARY TOKEN
             const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -280,7 +334,6 @@ class NeumorphismSignupForm {
 
             if (response.ok) {
                 console.log('OTP verification successful:', data);
-                // Store final user data in localStorage for automatic login
                 localStorage.setItem('accessToken', data.accessToken);
                 localStorage.setItem('refreshToken', data.refreshToken);
                 localStorage.setItem('userName', data.user.name);
