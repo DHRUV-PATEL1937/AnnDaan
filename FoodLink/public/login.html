@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups"> -->
     <title>FoodLink - Login</title>
     <meta name="description" content="Login to FoodLink to donate food and help those in need." />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -59,6 +58,62 @@
     }
     .shape.a{width:240px;height:240px;background:#bfe7d1;left:-60px;top:-60px}
     .shape.b{width:300px;height:300px;background:#dcefe6;right:-40px;top:-80px}
+
+    /* Styles for Role Selection in Modal */
+    .role-selection {
+        margin-bottom: 24px;
+    }
+    .role-selection p {
+        font-weight: 500;
+        color: var(--muted);
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    .role-options {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    .role-option {
+        position: relative;
+    }
+    .role-option input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+    .role-option label {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 15px 10px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    .role-option label i {
+        font-size: 24px;
+        color: var(--muted);
+        margin-bottom: 8px;
+        transition: color 0.3s ease;
+    }
+    .role-option label span {
+        font-weight: 600;
+        color: var(--muted);
+        transition: color 0.3s ease;
+    }
+    .role-option input[type="radio"]:checked + label {
+        border-color: var(--brand);
+        background-color: #f0fdfa;
+    }
+    .role-option input[type="radio"]:checked + label i,
+    .role-option input[type="radio"]:checked + label span {
+        color: var(--brand);
+    }
     </style>
     <link rel="stylesheet" href="login.css">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -69,7 +124,9 @@
         <div class="shape a"></div>
         <div class="shape b"></div>
 
-
+        <nav style="background: white; padding: 1rem; box-shadow: var(--shadow-1); text-align: center; margin-bottom: 2rem;">
+            <a href="dashboard.html" style="font-size: 1.5rem; font-weight: 700; color: var(--brand); text-decoration: none;">FoodLink Home</a>
+        </nav>
 
         <div class="login-container">
             <div class="login-card">
@@ -159,12 +216,40 @@
             </div>
         </div>
 
-        <!-- ⭐ NEW: Hidden Modal for Username Input -->
+        <!-- ⭐ UPDATED: Modal for Username and Role Input -->
         <div class="modal-overlay" id="usernameModal" style="display: none;">
             <div class="modal-content">
                 <h3>Complete Your Profile</h3>
-                <p>Please choose a unique username to finish setting up your account.</p>
+                <p>Choose a unique username and your role to finish signing up.</p>
                 <form id="usernameForm">
+                    <!-- ⭐ ROLE SELECTION ADDED TO MODAL -->
+                    <div class="role-selection">
+                        <p>I am signing up as a:</p>
+                        <div class="role-options">
+                            <div class="role-option">
+                                <input type="radio" id="modal-role-user" name="modal-role" value="user" checked>
+                                <label for="modal-role-user">
+                                    <i class="fas fa-user"></i>
+                                    <span>User</span>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" id="modal-role-ngo" name="modal-role" value="ngo">
+                                <label for="modal-role-ngo">
+                                    <i class="fas fa-hands-helping"></i>
+                                    <span>NGO</span>
+                                </label>
+                            </div>
+                            <div class="role-option">
+                                <input type="radio" id="modal-role-rider" name="modal-role" value="rider">
+                                <label for="modal-role-rider">
+                                    <i class="fas fa-motorcycle"></i>
+                                    <span>Rider</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <div class="input-group neu-input">
                             <input type="text" id="modalUsername" name="modalUsername" required autocomplete="username" placeholder=" ">
