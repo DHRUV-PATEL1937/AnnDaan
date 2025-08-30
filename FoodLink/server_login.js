@@ -938,30 +938,71 @@ app.get("/api/donations", authenticateToken, async (req, res) => {
   }
 });
 
-// Rider-specific route to get pickup requests
-app.get(
-  "/api/rider/pickup-requests",
-  authenticateToken,
-  requireRole(["rider"]),
-  async (req, res) => {
-    try {
-      // Find donations that need pickup (you might want to add a 'pickup_requested' status)
-      const pickupRequests = await Donation.find({
-        status: { $in: ["available", "pickup_requested"] },
-      }).sort({ createdAt: -1 });
+// --- MERGED & REFINED RIDER-SPECIFIC ROUTES ---
 
-      res.status(200).json({
-        message: "Pickup requests retrieved successfully",
-        requests: pickupRequests,
-      });
-    } catch (error) {
-      console.error("❌ Error fetching pickup requests:", error);
-      res.status(500).json({
-        message: "Failed to fetch pickup requests due to a server error.",
-      });
+app.get('/api/rider/requests/available', authenticateToken, requireRole(["rider"]), async (req, res) => {
+    try {
+        const requests = await Donation.find({ status: 'available' }).sort({ createdAt: -1 });
+        res.json(requests);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
     }
-  }
-);
+});
+
+app.get('/api/rider/requests/active', authenticateToken, requireRole(["rider"]), async (req, res) => {
+    try {
+        const requests = await Donation.find({
+            riderId: req.user.id,
+            status: { $in: ['accepted', 'in_transit'] }
+        });
+        res.json(requests);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.get('/api/rider/requests/history', authenticateToken, requireRole(["rider"]), async (req, res) => {
+    try {
+        const requests = await Donation.find({
+            riderId: req.user.id,
+            status: 'completed'
+        }).sort({ completedAt: -1 });
+        res.json(requests);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.patch('/api/rider/requests/:id/update-status', authenticateToken, requireRole(["rider"]), async (req, res) => {
+    const { status } = req.body;
+    const riderId = req.user.id;
+    if (!status || !['accepted', 'in_transit', 'completed', 'rejected'].includes(status)) {
+        return res.status(400).json({ msg: 'Invalid status provided.' });
+    }
+    try {
+        const request = await Donation.findById(req.params.id);
+        if (!request) {
+            return res.status(404).json({ msg: 'Request not found.' });
+        }
+        request.status = status;
+        if (status === 'rejected') {
+            request.riderId = null;
+        } else {
+            request.riderId = riderId;
+        }
+        if (status === 'completed') {
+            request.completedAt = new Date();
+        }
+        await request.save();
+        res.json(request);
+    } catch (err){
+        console.error(err.message);
+        res.status(500).send('Server Error');
+    }
+});
 
 // --- TOKEN REFRESH AND LOGOUT (UPDATED WITH ROLE) ---
 app.post("/api/auth/refresh-token", async (req, res) => {

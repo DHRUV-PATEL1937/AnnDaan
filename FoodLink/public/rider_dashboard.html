@@ -3,1051 +3,883 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rider Dashboard - FoodLink</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <title>FoodLink Rider Dashboard (Database Integrated)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Leaflet Routing Machine CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root {
-            --brand: #2e7d64;
-            --text: #1b2b22;
-            --muted: #5d6b61;
-            --accent-2: #ecf3ef;
-            --bg: #f7faf7;
-            --white: #ffffff;
-            --shadow-1: 0 2px 10px rgba(0,0,0,0.05);
-            --shadow-2: 0 8px 30px rgba(21,41,32,.1);
-            --radius-sm: 12px;
-            --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
-            --orange: #ff9800;
-            --blue: #2196f3;
-            --green: #4caf50;
-            --purple: #9c27b0;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: "Inter", system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
+            font-family: 'Inter', sans-serif;
         }
-
-        /* Header */
-        .header {
-            background: var(--white);
-            box-shadow: var(--shadow-1);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        .sidebar-icon {
+            width: 24px;
+            height: 24px;
         }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--brand);
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
+        ::-webkit-scrollbar-thumb {
+            background: #888;
         }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--grad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
-
-        .logout-btn {
-            background: none;
-            border: 1px solid var(--brand);
-            color: var(--brand);
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        #map {
+            height: 400px;
         }
-
-        .logout-btn:hover {
-            background: var(--brand);
-            color: white;
+        /* Leaflet routing machine custom styles to hide text instructions */
+        .leaflet-routing-container .leaflet-routing-alternatives-container {
+            display: none !important;
         }
-
-        /* Main Content */
-        .main-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 2rem;
+        /* Remove default rounding from Leaflet */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            border-radius: 0 !important;
         }
-
-        /* Sidebar */
-        .sidebar {
-            background: var(--white);
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-1);
-            padding: 1.5rem;
-            height: fit-content;
+        /* Custom styles for the online/offline toggle */
+        .toggle-checkbox:checked {
+            transform: translateX(100%);
+            border-color: #2563eb;
         }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 0.5rem;
-        }
-
-        .nav-item:hover, .nav-item.active {
-            background: var(--accent-2);
-            color: var(--brand);
-        }
-
-        .nav-item i {
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Dashboard Content */
-        .dashboard-content {
-            background: var(--white);
-            border-radius: var(--radius-sm);
-            box-shadow: var(--shadow-1);
-            padding: 2rem;
-        }
-
-        .page-title {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--text);
-        }
-
-        .page-subtitle {
-            color: var(--muted);
-            margin-bottom: 2rem;
-        }
-
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--white);
-            border: 1px solid var(--accent-2);
-            border-radius: var(--radius-sm);
-            padding: 1.5rem;
-            text-align: center;
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            color: white;
-            font-size: 1.5rem;
-        }
-
-        .stat-icon.deliveries {
-            background: var(--grad);
-        }
-
-        .stat-icon.earnings {
-            background: linear-gradient(135deg, #ff9800, #ffb74d);
-        }
-
-        .stat-icon.distance {
-            background: linear-gradient(135deg, #2196f3, #64b5f6);
-        }
-
-        .stat-icon.rating {
-            background: linear-gradient(135deg, #9c27b0, #ba68c8);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--brand);
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-
-        /* Pickup Requests Grid */
-        .requests-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-
-        .request-card {
-            border: 1px solid var(--accent-2);
-            border-radius: var(--radius-sm);
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .request-card:hover {
-            box-shadow: var(--shadow-2);
-            transform: translateY(-2px);
-        }
-
-        .request-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .request-title {
-            font-weight: 600;
-            color: var(--text);
-            font-size: 1.1rem;
-        }
-
-        .priority-badge {
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .priority-high {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        .priority-medium {
-            background: #fff3e0;
-            color: #f57c00;
-        }
-
-        .priority-low {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-
-        .request-details {
-            margin-bottom: 1rem;
-        }
-
-        .detail-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .detail-label {
-            color: var(--muted);
-            font-weight: 500;
-        }
-
-        .detail-value {
-            color: var(--text);
-            font-weight: 600;
-        }
-
-        .request-actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--brand);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1e5a4a;
-        }
-
-        .btn-secondary {
-            background: var(--orange);
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #e68900;
-        }
-
-        .btn-success {
-            background: var(--green);
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #388e3c;
-        }
-
-        /* Content sections */
-        .content-section {
-            display: none;
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        /* Status indicator */
-        .status-indicator {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .status-available {
-            background: var(--green);
-        }
-
-        .status-in-progress {
-            background: var(--orange);
-        }
-
-        .status-completed {
-            background: var(--blue);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                padding: 1rem;
-            }
-
-            .sidebar {
-                order: 2;
-            }
-
-            .requests-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Loading state */
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: var(--muted);
-        }
-
-        .loading i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.3;
-            animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Distance badge */
-        .distance-badge {
-            background: var(--accent-2);
-            color: var(--brand);
-            padding: 0.25rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #2563eb;
         }
     </style>
 </head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">
-                <i class="fas fa-motorcycle"></i>
-                <span>FoodLink Rider</span>
-            </div>
-            <div class="user-info">
-                <div class="user-avatar" id="userAvatar">R</div>
-                <span id="userName">Loading...</span>
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </div>
-    </header>
+<body class="bg-gray-50 text-gray-800">
 
-    <!-- Main Content -->
-    <div class="main-content">
+    <div class="flex h-screen">
         <!-- Sidebar -->
-        <aside class="sidebar">
-            <nav>
-                <div class="nav-item active" onclick="showSection('overview')">
-                    <i class="fas fa-home"></i>
-                    <span>Overview</span>
+        <aside class="w-20 bg-white border-r flex flex-col items-center py-4 space-y-6">
+            <div class="flex items-center justify-center flex-col">
+                 <div class="text-blue-600 font-bold text-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-box"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                 </div>
-                <div class="nav-item" onclick="showSection('requests')">
-                    <i class="fas fa-list"></i>
-                    <span>Pickup Requests</span>
-                </div>
-                <div class="nav-item" onclick="showSection('active')">
-                    <i class="fas fa-truck"></i>
-                    <span>Active Deliveries</span>
-                </div>
-                <div class="nav-item" onclick="showSection('history')">
-                    <i class="fas fa-history"></i>
-                    <span>Delivery History</span>
-                </div>
-                <div class="nav-item" onclick="showSection('earnings')">
-                    <i class="fas fa-dollar-sign"></i>
-                    <span>Earnings</span>
-                </div>
-                <div class="nav-item" onclick="showSection('profile')">
-                    <i class="fas fa-user"></i>
-                    <span>Profile</span>
-                </div>
+                <span class="font-bold text-sm mt-1 text-gray-700">FoodLink</span>
+            </div>
+           
+            <nav class="flex flex-col items-center space-y-4 flex-grow">
+                <a href="#" id="dashboard-link" class="p-3 bg-blue-100 text-blue-600" title="Dashboard"><i data-lucide="layout-dashboard" class="sidebar-icon"></i></a>
+                <a href="#" id="analytics-link" class="p-3 hover:bg-gray-100" title="Analytics"><i data-lucide="bar-chart-2" class="sidebar-icon"></i></a>
+                <a href="#" id="profile-link" class="p-3 hover:bg-gray-100" title="Profile"><i data-lucide="user" class="sidebar-icon"></i></a>
+                <a href="#" id="support-link" class="p-3 hover:bg-gray-100" title="Support"><i data-lucide="life-buoy" class="sidebar-icon"></i></a>
             </nav>
+            <div class="p-3 hover:bg-gray-100 cursor-pointer" title="Logout"><i data-lucide="log-out" class="sidebar-icon"></i></div>
         </aside>
 
-        <!-- Dashboard Content -->
-        <main class="dashboard-content">
-            <!-- Overview Section -->
-            <div id="overview" class="content-section active">
-                <h1 class="page-title">Rider Dashboard</h1>
-                <p class="page-subtitle">Manage pickup requests and track your deliveries</p>
-
-                <!-- Stats -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon deliveries">
-                            <i class="fas fa-truck"></i>
-                        </div>
-                        <div class="stat-number" id="totalDeliveries">0</div>
-                        <div class="stat-label">Total Deliveries</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div class="stat-number" id="totalEarnings">₹0</div>
-                        <div class="stat-label">Total Earnings</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon distance">
-                            <i class="fas fa-route"></i>
-                        </div>
-                        <div class="stat-number" id="totalDistance">0</div>
-                        <div class="stat-label">Km Traveled</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon rating">
-                            <i class="fas fa-star"></i>
-                        </div>
-                        <div class="stat-number" id="averageRating">5.0</div>
-                        <div class="stat-label">Average Rating</div>
-                    </div>
-                </div>
-
-                <!-- Available Pickup Requests -->
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-white border-b px-6 py-3 flex justify-between items-center">
                 <div>
-                    <h2 style="margin-bottom: 1rem;">Available Pickup Requests</h2>
-                    <div id="availableRequests" class="requests-grid">
-                        <div class="loading">
-                            <i class="fas fa-spinner"></i>
-                            <p>Loading pickup requests...</p>
+                    <span id="welcome-message" class="font-semibold text-gray-800">Welcome, Rajesh!</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div id="status-container" class="flex items-center gap-4">
+                        <div id="status-indicator" class="flex items-center gap-2">
+                             <span class="relative flex h-3 w-3"><span class="relative inline-flex h-3 w-3 bg-red-500 rounded-full"></span></span>
+                             <span class="text-red-600 font-semibold">Offline</span>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="online-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-transform duration-200 ease-in-out"/>
+                            <label for="online-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                    </div>
+                    <button id="logout-btn" class="bg-red-600 text-white px-4 py-2 font-semibold hover:bg-red-700">Logout</button>
+                    <div class="relative">
+                         <i data-lucide="bell" class="text-gray-500 cursor-pointer"></i>
+                         <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs h-4 w-4 flex items-center justify-center">3</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                
+                <!-- Dashboard Page -->
+                <div id="dashboard-page">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-6">
+                        <div class="bg-white p-4 shadow"><h3 class="text-sm text-gray-500">Today's Contribution</h3><p id="todays-points-card" class="text-2xl font-bold mt-1">0 pts</p><p class="text-sm text-gray-500 flex items-center mt-1">Keep up the great work!</p></div>
+                        <div class="bg-white p-4 shadow"><h3 class="text-sm text-gray-500">Today's Collections</h3><p id="todays-collections-card" class="text-2xl font-bold mt-1">0</p><p class="text-sm text-gray-500 flex items-center mt-1">&nbsp;</p></div>
+                        <div class="bg-white p-4 shadow"><h3 class="text-sm text-gray-500">Avg. Pickup Time</h3><p class="text-2xl font-bold mt-1">12m</p><p class="text-sm text-gray-500 flex items-center mt-1">&nbsp;</p></div>
+                        <div class="bg-white p-4 shadow"><h3 class="text-sm text-gray-500">Donor Rating</h3><p class="text-2xl font-bold mt-1">4.9</p><p class="text-sm text-gray-500 flex items-center mt-1">&nbsp;</p></div>
+                        <div class="bg-white p-4 shadow flex flex-col justify-center"><p class="text-sm text-gray-500">Total Contribution</p><p id="total-points-card" class="text-2xl font-bold text-blue-600">12,500 pts</p></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white p-6 shadow">
+                            <div class="flex justify-between items-center mb-4">
+                                <div><h3 class="font-semibold">Current Location</h3><p id="current-location-text" class="text-sm text-gray-500">Alkapuri, Vadodara, Gujarat</p></div>
+                                <button id="recenter-map" class="text-sm text-blue-600 font-semibold hover:underline">Recenter</button>
+                            </div>
+                            <div id="map-container" class="w-full h-[400px] bg-gray-200"><div id="map" class="w-full h-full"></div></div>
+                        </div>
+                        <div id="active-delivery-container" class="bg-white p-6 shadow flex flex-col"></div>
+                    </div>
+                    
+                    <div id="pending-orders-section" class="mt-6 bg-white p-6 shadow relative">
+                        <h3 class="font-semibold mb-4">Pending Pickups</h3>
+                        <div id="pending-orders-container" class="space-y-4 max-h-64 overflow-y-auto">
+                            <div class="text-center py-4">
+                                <p class="text-gray-500">Loading pending pickups...</p>
+                            </div>
+                        </div>
+                        <div id="offline-overlay" class="absolute inset-0 bg-gray-50 bg-opacity-80 flex items-center justify-center"><p class="text-lg font-semibold text-gray-700">You are offline. Go online to see new pickups.</p></div>
+                    </div>
+
+                    <div class="mt-6 bg-white p-6 shadow">
+                        <h3 class="font-semibold mb-4">Today's Completed Collections</h3>
+                        <div id="completed-orders-container" class="space-y-4 max-h-64 overflow-y-auto">
+                            <div class="text-center py-4">
+                                <p class="text-gray-500">No collections completed today.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- All Pickup Requests Section -->
-            <div id="requests" class="content-section">
-                <h1 class="page-title">All Pickup Requests</h1>
-                <p class="page-subtitle">Browse and accept pickup requests in your area</p>
-
-                <div id="allRequests" class="requests-grid">
-                    <div class="loading">
-                        <i class="fas fa-spinner"></i>
-                        <p>Loading all pickup requests...</p>
+                
+                <!-- Profile Page -->
+                <div id="profile-page" class="hidden">
+                     <div class="max-w-7xl mx-auto">
+                        <div class="flex items-center gap-4 mb-8">
+                            <img src="https://placehold.co/80x80/E2E8F0/4A5568?text=RK" alt="Rajesh Kumar">
+                            <div><h1 class="text-2xl font-bold">Rajesh Kumar</h1><p class="text-gray-500">+91 9876543210</p><div class="flex items-center gap-4 text-sm mt-1"><span class="flex items-center gap-1"><i data-lucide="star" class="w-4 h-4 text-yellow-500 fill-current"></i> 4.9 Rating</span><span class="text-gray-400">|</span><span>On Time Pickups: <span class="font-semibold">97.5%</span></span><span class="text-gray-400">|</span><span>Complete Rate: <span class="font-semibold">99.5%</span></span></div></div>
+                            <div class="ml-auto text-right"><p class="text-sm text-gray-500">Total Contribution</p><p id="profile-total-points" class="text-2xl font-bold text-blue-600">12,500 pts</p><p class="text-sm text-gray-500">This Month: <span id="profile-month-points">1,800</span> pts</p></div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <div class="bg-white p-6 shadow mb-8"><div class="flex justify-between items-center mb-4"><h2 class="text-lg font-semibold">Personal Information</h2><button class="text-sm text-blue-600 font-semibold hover:underline">Edit</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div><span class="text-gray-500">Full Name</span><p class="font-medium">Rajesh Kumar</p></div><div><span class="text-gray-500">Phone Number</span><p class="font-medium">+91 9876543210</p></div><div><span class="text-gray-500">Email</span><p class="font-medium">rajesh.kumar@example.com</p></div><div><span class="text-gray-500">Address</span><p class="font-medium">123 MG Road, Bangalore, Karnataka 560001</p></div><div><span class="text-gray-500">Emergency Contact</span><p class="font-medium">+91 9876543211</p></div></div></div>
+                                <div class="bg-white p-6 shadow"><h2 class="text-lg font-semibold mb-4">Documents</h2><ul class="space-y-3"><li class="flex justify-between items-center p-3 bg-gray-50"><span class="flex items-center gap-2 font-medium"><i data-lucide="file-text"></i>Aadhar Card</span><span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1">Verified</span></li><li class="flex justify-between items-center p-3 bg-gray-50"><span class="flex items-center gap-2 font-medium"><i data-lucide="file-text"></i>PAN Card</span><span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1">Verified</span></li><li class="flex justify-between items-center p-3 bg-gray-50"><span class="flex items-center gap-2 font-medium"><i data-lucide="file-text"></i>Driving License</span><span class="text-xs font-semibold text-green-600 bg-green-100 px-2 py-1">Verified</span></li><li class="flex justify-between items-center p-3 bg-gray-50"><span class="flex items-center gap-2 font-medium"><i data-lucide="file-text"></i>Vehicle Registration</span><span class="text-xs font-semibold text-yellow-600 bg-yellow-100 px-2 py-1">Pending</span></li></ul></div>
+                            </div>
+                            <div>
+                                <div class="bg-white p-6 shadow mb-8"><h2 class="text-lg font-semibold mb-4">Vehicle Information</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"><div><span class="text-gray-500">Vehicle Type</span><p class="font-medium">Motorcycle</p></div><div><span class="text-gray-500">Vehicle Number</span><p class="font-medium">KA05AB1234</p></div><div><span class="text-gray-500">Driving License</span><p class="font-medium">KA1234567890</p></div></div></div>
+                                <div class="bg-white p-6 shadow mb-8"><h2 class="text-lg font-semibold mb-4">Notification Settings</h2><ul class="space-y-3"><li class="flex justify-between items-center"><span class="font-medium">Pickup Alerts</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" value="" class="sr-only peer" checked><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></li><li class="flex justify-between items-center"><span class="font-medium">Promotions</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" value="" class="sr-only peer" checked><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></li><li class="flex justify-between items-center"><span class="font-medium">System Updates</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" value="" class="sr-only peer"><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></li><li class="flex justify-between items-center"><span class="font-medium">Emergency Alerts</span><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" value="" class="sr-only peer" checked><div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div></label></li></ul></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 shadow mb-8"><h2 class="text-lg font-semibold mb-4">Quick Actions</h2><div class="flex flex-wrap gap-4"><button class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4"><i data-lucide="refresh-cw"></i> Update Availability</button><button class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4"><i data-lucide="phone-forwarded"></i> Emergency Contacts</button><button class="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4"><i data-lucide="shield"></i> Privacy Settings</button></div></div>
+                        <div class="bg-white p-6 shadow"><h2 class="text-lg font-semibold mb-4">Account Management</h2><div class="flex flex-wrap gap-4"><button class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4">Logout</button><button class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4">Deactivate Account</button></div></div>
                     </div>
                 </div>
-            </div>
+                
+                <!-- Support Page -->
+                <div id="support-page" class="hidden">
+                    <div class="max-w-5xl mx-auto"><div class="text-center mb-8"><h1 class="text-3xl font-bold">FoodLink Support Center</h1><p class="text-gray-500 mt-2">24/7 assistance for our partners</p><div class="mt-2 text-sm text-gray-500"><span>Average response time: 2 minutes</span><span class="mx-2">|</span><span>5 agents online</span></div></div><div class="flex justify-center gap-8 border-b mb-8"><button class="py-3 border-b-2 border-blue-600 text-blue-600 font-semibold">Help & FAQ</button><button class="py-3 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600">Contact Support</button><button class="py-3 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600">Report Issue</button><button class="py-3 border-b-2 border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600">Emergency</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-8"><div><h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="truck"></i> Pickup Issues</h2><div class="space-y-4"><div class="accordion-item bg-white shadow-sm"><button class="accordion-header w-full flex justify-between items-center p-4 text-left font-medium"><span>What to do if donor is not available?</span><i data-lucide="chevron-down" class="transition-transform"></i></button><div class="accordion-content hidden p-4 border-t"><p class="text-gray-600">First, try calling the donor. If there's no response, wait for 5-10 minutes. If they are still unavailable, please contact support through the app for further instructions. Do not leave the location without confirmation.</p></div></div><div class="accordion-item bg-white shadow-sm"><button class="accordion-header w-full flex justify-between items-center p-4 text-left font-medium"><span>How to handle incorrect addresses?</span><i data-lucide="chevron-down" class="transition-transform"></i></button><div class="accordion-content hidden p-4 border-t"><p class="text-gray-600">If you believe the address is incorrect, contact the donor immediately for clarification. If you cannot reach them, please contact support. Do not attempt to go to a different address without confirmation from support.</p></div></div></div></div><div><h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="credit-card"></i> Contribution & Payments</h2><div class="space-y-4"><div class="accordion-item bg-white shadow-sm"><button class="accordion-header w-full flex justify-between items-center p-4 text-left font-medium"><span>How are contribution points calculated?</span><i data-lucide="chevron-down" class="transition-transform"></i></button><div class="accordion-content hidden p-4 border-t"><p class="text-gray-600">Points are calculated based on the quantity of food collected, distance, and time of day. More points are awarded for larger contributions and during peak hours.</p></div></div><div class="accordion-item bg-white shadow-sm"><button class="accordion-header w-full flex justify-between items-center p-4 text-left font-medium"><span>When do I receive my stipend?</span><i data-lucide="chevron-down" class="transition-transform"></i></button><div class="accordion-content hidden p-4 border-t"><p class="text-gray-600">Stipends for travel and time are processed weekly. You should receive payment every Tuesday for the previous week's work.</p></div></div></div></div><div><h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="wrench"></i> Vehicle Breakdown</h2><div class="space-y-4"><div class="accordion-item bg-white shadow-sm"><button class="accordion-header w-full flex justify-between items-center p-4 text-left font-medium"><span>Vehicle broke down during a pickup?</span><i data-lucide="chevron-down" class="transition-transform"></i></button><div class="accordion-content hidden p-4 border-t"><p class="text-gray-600">Ensure your safety first. Move your vehicle to a safe location if possible. Then, immediately contact support to inform them about the situation. They will assist with the current collection and provide further instructions.</p></div></div></div></div><div><h2 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="shield-alert"></i> Safety Concerns</h2><div class="space-y-4"><div class="accordion-item bg-white shadow-sm"><button class="accordion-header w-full flex justify-between items-center p-4 text-left font-medium"><span>How to report unsafe areas?</span><i data-lucide="chevron-down" class="transition-transform"></i></button><div class="accordion-content hidden p-4 border-t"><p class="text-gray-600">If you feel an area is unsafe, please report it through the 'Report Issue' section in the app. Provide as much detail as possible. Your safety is our priority, and we take these reports very seriously.</p></div></div></div></div></div></div>
+                </div>
 
-            <!-- Active Deliveries Section -->
-            <div id="active" class="content-section">
-                <h1 class="page-title">Active Deliveries</h1>
-                <p class="page-subtitle">Track your current pickup and delivery tasks</p>
-
-                <div id="activeDeliveries" class="requests-grid">
-                    <div class="loading">
-                        <i class="fas fa-spinner"></i>
-                        <p>Loading active deliveries...</p>
+                 <!-- Analytics Page -->
+                <div id="analytics-page" class="hidden">
+                    <div class="max-w-7xl mx-auto">
+                        <h1 class="text-3xl font-bold mb-6">Performance Analytics</h1>
+                        <div class="bg-white p-6 shadow">
+                             <h2 class="text-lg font-semibold mb-4">Monthly Contribution Points</h2>
+                             <div class="h-96">
+                                <canvas id="analyticsChart"></canvas>
+                             </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Delivery History Section -->
-            <div id="history" class="content-section">
-                <h1 class="page-title">Delivery History</h1>
-                <p class="page-subtitle">View your completed deliveries and earnings</p>
-
-                <div id="deliveryHistory" class="requests-grid">
-                    <div class="loading">
-                        <i class="fas fa-spinner"></i>
-                        <p>Loading delivery history...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Earnings Section -->
-            <div id="earnings" class="content-section">
-                <h1 class="page-title">Earnings Summary</h1>
-                <p class="page-subtitle">Track your earnings and payment history</p>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <div class="stat-number" id="todayEarnings">₹0</div>
-                        <div class="stat-label">Today's Earnings</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-calendar-week"></i>
-                        </div>
-                        <div class="stat-number" id="weekEarnings">₹0</div>
-                        <div class="stat-label">This Week</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon earnings">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <div class="stat-number" id="monthEarnings">₹0</div>
-                        <div class="stat-label">This Month</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon deliveries">
-                            <i class="fas fa-truck"></i>
-                        </div>
-                        <div class="stat-number" id="monthDeliveries">0</div>
-                        <div class="stat-label">Deliveries This Month</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile Section -->
-            <div id="profile" class="content-section">
-                <h1 class="page-title">Rider Profile</h1>
-                <p class="page-subtitle">Manage your rider information and vehicle details</p>
-
-                <form id="profileForm" style="max-width: 500px;">
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Full Name</label>
-                        <input type="text" id="profileName" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Email</label>
-                        <input type="email" id="profileEmail" disabled style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px; background: #f5f5f5;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Phone</label>
-                        <input type="tel" id="profilePhone" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Address</label>
-                        <textarea id="profileAddress" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px; resize: vertical;"></textarea>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Vehicle Type</label>
-                        <select id="vehicleType" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
-                            <option value="motorcycle">Motorcycle</option>
-                            <option value="bicycle">Bicycle</option>
-                            <option value="car">Car</option>
-                            <option value="van">Van</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Vehicle Number</label>
-                        <input type="text" id="vehicleNumber" style="width: 100%; padding: 0.75rem; border: 1px solid var(--accent-2); border-radius: 6px;">
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i>
-                        Update Profile
-                    </button>
-                </form>
             </div>
         </main>
     </div>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Leaflet Routing Machine JS -->
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
     <script>
-        // Global variables
-        let currentUser = null;
-        let pickupRequests = [];
-        let activeDeliveries = [];
-        let deliveryHistory = [];
+        lucide.createIcons();
 
-        // Initialize dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuthentication();
-        });
-
-        // Check if user is authenticated and has rider role
-        function checkAuthentication() {
-            const token = localStorage.getItem('accessToken');
-            if (!token) {
-                window.location.href = 'login.html';
-                return;
+        // FoodLink Database System - Simulated Real-time Database
+        class FoodLinkDatabase {
+            constructor() {
+                this.storageKey = 'foodlink_database';
+                this.listeners = {};
+                this.initializeDatabase();
+                this.setupStorageListener();
             }
 
-            fetch('/api/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            initializeDatabase() {
+                if (!localStorage.getItem(this.storageKey)) {
+                    const initialData = {
+                        donations: [],
+                        riders: [
+                            {
+                                id: 1,
+                                name: 'Rajesh Kumar',
+                                phone: '+91 9876543210',
+                                location: { lat: 22.3072, lng: 73.1812 },
+                                isOnline: false,
+                                currentOrders: [],
+                                completedOrders: [],
+                                totalPoints: 12500,
+                                todayPoints: 0,
+                                todayCollections: 0,
+                                rating: 4.9
+                            },
+                            {
+                                id: 2,
+                                name: 'Amit Patel',
+                                phone: '+91 9876543211',
+                                location: { lat: 22.3200, lng: 73.1900 },
+                                isOnline: false,
+                                currentOrders: [],
+                                completedOrders: [],
+                                totalPoints: 8500,
+                                todayPoints: 0,
+                                todayCollections: 0,
+                                rating: 4.7
+                            },
+                            {
+                                id: 3,
+                                name: 'Priya Sharma',
+                                phone: '+91 9876543212',
+                                location: { lat: 22.2950, lng: 73.1650 },
+                                isOnline: false,
+                                currentOrders: [],
+                                completedOrders: [],
+                                totalPoints: 15200,
+                                todayPoints: 0,
+                                todayCollections: 0,
+                                rating: 4.8
+                            }
+                        ],
+                        ngos: [
+                            {
+                                id: 1,
+                                name: 'Helping Hands NGO',
+                                location: 'Vadodara City',
+                                mealsServed: 25000,
+                                totalContributions: 1500,
+                                rewards: 120
+                            }
+                        ],
+                        activityLog: [],
+                        lastUpdated: Date.now()
+                    };
+                    this.saveData(initialData);
                 }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Authentication failed');
+            }
+
+            setupStorageListener() {
+                window.addEventListener('storage', (e) => {
+                    if (e.key === this.storageKey && e.newValue) {
+                        const data = JSON.parse(e.newValue);
+                        this.notifyListeners('dataChanged', data);
+                    }
+                });
+            }
+
+            getData() {
+                const data = localStorage.getItem(this.storageKey);
+                return data ? JSON.parse(data) : null;
+            }
+
+            saveData(data) {
+                data.lastUpdated = Date.now();
+                localStorage.setItem(this.storageKey, JSON.stringify(data));
+                window.dispatchEvent(new CustomEvent('foodlinkDataUpdate', { detail: data }));
+            }
+
+            assignDonationToRider(donationId, riderId) {
+                const data = this.getData();
+                const donationIndex = data.donations.findIndex(d => d.id === donationId);
+                const riderIndex = data.riders.findIndex(r => r.id === riderId);
+                
+                if (donationIndex !== -1 && riderIndex !== -1) {
+                    data.donations[donationIndex].status = 'assigned';
+                    data.donations[donationIndex].assignedRider = data.riders[riderIndex];
+                    data.donations[donationIndex].assignedAt = new Date().toISOString();
+                    
+                    data.riders[riderIndex].currentOrders.push({
+                        ...data.donations[donationIndex],
+                        status: 'accepted'
+                    });
+                    
+                    this.addActivityLog(`${data.riders[riderIndex].name} accepted pickup from ${data.donations[donationIndex].donorName}`, 'assignment');
+                    this.saveData(data);
+                    return true;
                 }
-                return response.json();
-            })
-            .then(data => {
-                currentUser = data.user;
-                if (currentUser.role !== 'rider') {
-                    alert('Access denied. This dashboard is for rider users only.');
-                    window.location.href = 'login.html';
+                return false;
+            }
+
+            updateDeliveryStatus(donationId, status, riderId) {
+                const data = this.getData();
+                const donationIndex = data.donations.findIndex(d => d.id === donationId);
+                const riderIndex = data.riders.findIndex(r => r.id === riderId);
+                
+                if (donationIndex !== -1 && riderIndex !== -1) {
+                    data.donations[donationIndex].status = status;
+                    data.donations[donationIndex].updatedAt = new Date().toISOString();
+                    
+                    const rider = data.riders[riderIndex];
+                    const orderIndex = rider.currentOrders.findIndex(o => o.id === donationId);
+                    
+                    if (orderIndex !== -1) {
+                        rider.currentOrders[orderIndex].status = status;
+                        
+                        if (status === 'completed') {
+                            const completedOrder = rider.currentOrders.splice(orderIndex, 1)[0];
+                            rider.completedOrders.push(completedOrder);
+                            
+                            const points = completedOrder.points || 25;
+                            rider.todayPoints += points;
+                            rider.totalPoints += points;
+                            rider.todayCollections += 1;
+                            
+                            data.ngos[0].mealsServed += Math.floor(Math.random() * 10) + 5;
+                            data.ngos[0].totalContributions += 1;
+                            
+                            this.addActivityLog(`Delivery completed by ${rider.name} - ${completedOrder.donorName}`, 'completion');
+                        } else if (status === 'picked_up') {
+                            this.addActivityLog(`Food picked up by ${rider.name} from ${data.donations[donationIndex].donorName}`, 'pickup');
+                        }
+                    }
+                    
+                    this.saveData(data);
+                    return true;
+                }
+                return false;
+            }
+
+            updateRiderStatus(riderId, isOnline) {
+                const data = this.getData();
+                const riderIndex = data.riders.findIndex(r => r.id === riderId);
+                
+                if (riderIndex !== -1) {
+                    data.riders[riderIndex].isOnline = isOnline;
+                    this.addActivityLog(`${data.riders[riderIndex].name} went ${isOnline ? 'online' : 'offline'}`, 'status');
+                    this.saveData(data);
+                    return true;
+                }
+                return false;
+            }
+
+            getAvailableDonations() {
+                const data = this.getData();
+                return data.donations.filter(d => d.status === 'pending');
+            }
+
+            getRider(riderId) {
+                const data = this.getData();
+                return data.riders.find(r => r.id === riderId);
+            }
+
+            addActivityLog(message, type) {
+                const data = this.getData();
+                data.activityLog.unshift({
+                    id: Date.now(),
+                    message,
+                    type,
+                    timestamp: new Date().toISOString()
+                });
+                
+                if (data.activityLog.length > 50) {
+                    data.activityLog = data.activityLog.slice(0, 50);
+                }
+            }
+
+            subscribe(event, callback) {
+                if (!this.listeners[event]) {
+                    this.listeners[event] = [];
+                }
+                this.listeners[event].push(callback);
+                
+                window.addEventListener('foodlinkDataUpdate', (e) => {
+                    if (event === 'dataChanged') {
+                        callback(e.detail);
+                    }
+                });
+            }
+
+            notifyListeners(event, data) {
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(callback => callback(data));
+                }
+            }
+        }
+
+        // Rider Dashboard Application
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize database
+            const db = new FoodLinkDatabase();
+            
+            // --- State Management ---
+            let isOnline = false;
+            let currentRiderId = 1; // Rajesh Kumar
+            let riderUsername = "Rajesh";
+            let riderLocation = L.latLng(22.3072, 73.1812); // Initial location
+            let riderLocationName = "Alkapuri, Vadodara, Gujarat";
+            let todaysPoints = 0;
+            let totalPoints = 12500;
+            let todaysCollections = 0;
+
+            // --- Map Variables ---
+            let map;
+            let riderMarker;
+            let routingControl = null;
+            let destinationMarker = null;
+            let analyticsChart = null;
+            
+            // --- UI Elements ---
+            const logoutBtn = document.getElementById('logout-btn');
+            const welcomeMsg = document.getElementById('welcome-message');
+            const onlineToggle = document.getElementById('online-toggle');
+            const statusIndicator = document.getElementById('status-indicator');
+            const offlineOverlay = document.getElementById('offline-overlay');
+            const pendingOrdersSection = document.getElementById('pending-orders-section');
+            const currentLocationText = document.getElementById('current-location-text');
+            const pendingOrdersContainer = document.getElementById('pending-orders-container');
+            const activeDeliveryContainer = document.getElementById('active-delivery-container');
+            const completedOrdersContainer = document.getElementById('completed-orders-container');
+            const todaysPointsCard = document.getElementById('todays-points-card');
+            const todaysCollectionsCard = document.getElementById('todays-collections-card');
+            const totalPointsCard = document.getElementById('total-points-card');
+
+            // --- Data Variables ---
+            let pendingOrders = [];
+            let activeOrders = [];
+            let completedOrders = [];
+            const communityKitchen = { name: 'Community Kitchen', coords: [22.285, 73.195] };
+
+            // --- Map Initialization and Functions ---
+            const bikeIcon = L.icon({ iconUrl: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-bike"><path d="M12 18a2 2 0 0 1-2-2c0-1.1.9-2 2-2s2 .9 2 2c0 1.1-.9 2-2 2Z"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="m6 10 2-4 3 4"/><path d="M12 14 8.5 6H6l2 4"/><path d="m17.5 6-2.5 4-3-4h3z"/></svg>`, iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] });
+            const pinIcon = L.icon({ iconUrl: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="red" stroke="white" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`, iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] });
+
+            function initializeMap() {
+                if (map) return;
+                map = L.map('map').setView(riderLocation, 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(map);
+                riderMarker = L.marker(riderLocation, { icon: bikeIcon }).addTo(map).bindPopup('<b>Your Location</b>').openPopup();
+            }
+
+            function clearMapRoute() {
+                if (routingControl) map.removeControl(routingControl);
+                if (destinationMarker) map.removeLayer(destinationMarker);
+                routingControl = null;
+                destinationMarker = null;
+            }
+
+            function drawRoute(startCoords, endCoords, startName, endName) {
+                clearMapRoute();
+                destinationMarker = L.marker(endCoords, { icon: pinIcon }).addTo(map).bindPopup(`<b>${endName}</b>`).openPopup();
+                routingControl = L.Routing.control({ waypoints: [L.latLng(startCoords), L.latLng(endCoords)], routeWhileDragging: false, addWaypoints: false, draggableWaypoints: false, fitSelectedRoutes: true, show: false, lineOptions: { styles: [{color: 'blue', opacity: 0.8, weight: 6}] } }).addTo(map);
+            }
+
+            // --- Database Integration ---
+            function loadRiderData() {
+                const rider = db.getRider(currentRiderId);
+                if (rider) {
+                    todaysPoints = rider.todayPoints;
+                    totalPoints = rider.totalPoints;
+                    todaysCollections = rider.todayCollections;
+                    activeOrders = rider.currentOrders;
+                    completedOrders = rider.completedOrders;
+                    updateDashboardCards();
+                    updateProfileData(rider);
+                }
+            }
+
+            function loadPendingOrders() {
+                const availableDonations = db.getAvailableDonations();
+                pendingOrders = availableDonations.map(donation => ({
+                    id: donation.id,
+                    name: donation.donorName,
+                    distance: donation.distance,
+                    points: donation.points,
+                    coords: donation.coords,
+                    donor: {
+                        name: donation.donorName,
+                        phone: donation.donorPhone,
+                        address: donation.donorAddress
+                    },
+                    foodType: donation.foodType,
+                    dietType: donation.dietType,
+                    servings: donation.servings,
+                    description: donation.description,
+                    status: 'pending'
+                }));
+                renderPendingOrders();
+            }
+
+            // --- UI Update Functions ---
+            function updateDashboardCards() {
+                todaysPointsCard.textContent = `${todaysPoints} pts`;
+                todaysCollectionsCard.textContent = todaysCollections;
+                totalPointsCard.textContent = `${totalPoints} pts`;
+            }
+
+            function updateProfileData(rider) {
+                document.getElementById('profile-total-points').textContent = `${rider.totalPoints} pts`;
+                document.getElementById('profile-month-points').textContent = Math.floor(rider.todayPoints * 7); // Simulate monthly
+            }
+
+            function updateOnlineStatusUI() {
+                if (isOnline) {
+                    statusIndicator.innerHTML = `<span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full bg-green-400 opacity-75"></span><span class="relative inline-flex h-3 w-3 bg-green-500 rounded-full"></span></span><span class="text-green-600 font-semibold">Online</span>`;
+                    offlineOverlay.classList.add('hidden');
+                    pendingOrdersSection.classList.remove('opacity-50');
+                } else {
+                    statusIndicator.innerHTML = `<span class="relative flex h-3 w-3"><span class="relative inline-flex h-3 w-3 bg-red-500 rounded-full"></span></span><span class="text-red-600 font-semibold">Offline</span>`;
+                    offlineOverlay.classList.remove('hidden');
+                    pendingOrdersSection.classList.add('opacity-50');
+                }
+                
+                // Update database
+                db.updateRiderStatus(currentRiderId, isOnline);
+                lucide.createIcons();
+            }
+            
+            function renderAnalyticsChart() {
+                if (analyticsChart) return; // Initialize chart only once
+                const ctx = document.getElementById('analyticsChart').getContext('2d');
+                const monthlyData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    points: [1500, 1800, 1650, 2100, 1900, 2300, 1800]
+                };
+                
+                analyticsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: monthlyData.labels,
+                        datasets: [{
+                            label: 'Contribution Points',
+                            data: monthlyData.points,
+                            backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // --- Core Logic & Rendering ---
+            function renderPendingOrders() {
+                if (pendingOrders.length === 0) {
+                    pendingOrdersContainer.innerHTML = '<div class="text-center py-4"><p class="text-gray-500">No pending pickups available.</p></div>';
                     return;
                 }
-                updateUserInfo();
-                loadDashboardData();
-            })
-            .catch(error => {
-                console.error('Authentication error:', error);
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = 'login.html';
-            });
-        }
-
-        // Update user info in header
-        function updateUserInfo() {
-            if (currentUser) {
-                document.getElementById('userName').textContent = currentUser.name;
-                document.getElementById('userAvatar').textContent = currentUser.name.charAt(0).toUpperCase();
                 
-                // Update profile form
-                document.getElementById('profileName').value = currentUser.name || '';
-                document.getElementById('profileEmail').value = currentUser.email || '';
-                document.getElementById('profilePhone').value = currentUser.phone || '';
-                document.getElementById('profileAddress').value = currentUser.address || '';
-                document.getElementById('vehicleType').value = currentUser.vehicleType || 'motorcycle';
-                document.getElementById('vehicleNumber').value = currentUser.vehicleNumber || '';
+                pendingOrdersContainer.innerHTML = '';
+                pendingOrders.forEach(order => {
+                    const orderEl = document.createElement('div');
+                    orderEl.className = 'flex justify-between items-center p-4 border';
+                    orderEl.innerHTML = `
+                        <div>
+                            <p class="font-semibold">${order.name}</p>
+                            <p class="text-sm text-gray-500">${order.foodType} - ${order.servings} servings</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-green-600">${order.points} pts</p>
+                            <p class="text-sm text-gray-500">${order.distance}</p>
+                        </div>
+                        <button data-order-id="${order.id}" class="accept-order-btn bg-green-500 text-white px-4 py-2 font-semibold hover:bg-green-600">Accept</button>
+                    `;
+                    pendingOrdersContainer.appendChild(orderEl);
+                });
             }
-        }
 
-        // Load dashboard data
-        function loadDashboardData() {
-            loadPickupRequests();
-            updateStats();
-        }
-
-        // Load pickup requests
-        function loadPickupRequests() {
-            const token = localStorage.getItem('accessToken');
+            function renderActiveOrdersList() {
+                activeDeliveryContainer.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-semibold">Active Pickups</h3>
+                        <span class="text-sm text-gray-500">${activeOrders.length} Active</span>
+                    </div>
+                    <div id="active-orders-list" class="flex-1 overflow-y-auto space-y-3 pr-2">
+                        ${activeOrders.length === 0 ? 
+                            '<p class="text-gray-500 text-center">No active pickups.</p>' : 
+                            activeOrders.map(order => `
+                                <div class="p-3 border bg-gray-50 cursor-pointer active-order-card" data-order-id="${order.id}">
+                                    <div class="flex items-center justify-between">
+                                        <p class="font-semibold">Pickup Accepted</p>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                                    </div>
+                                    <p class="text-sm text-gray-500">Heading to ${order.name}</p>
+                                </div>
+                            `).join('')
+                        }
+                    </div>
+                `;
+                lucide.createIcons();
+            }
             
-            fetch('/api/rider/pickup-requests', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            function renderCompletedOrders() {
+                if (completedOrders.length === 0) {
+                    completedOrdersContainer.innerHTML = '<div class="text-center py-4"><p class="text-gray-500">No collections completed today.</p></div>';
+                    return;
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                pickupRequests = data.requests || [];
-                displayAvailableRequests();
-                displayAllRequests();
-                displayActiveDeliveries();
-                displayDeliveryHistory();
-            })
-            .catch(error => {
-                console.error('Error loading pickup requests:', error);
-                document.getElementById('availableRequests').innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <p>Error loading pickup requests. Please refresh the page.</p>
+                
+                completedOrdersContainer.innerHTML = '';
+                completedOrders.forEach(order => {
+                    const orderEl = document.createElement('div');
+                    orderEl.className = 'flex justify-between items-center p-3 border bg-green-50';
+                    orderEl.innerHTML = `
+                        <div>
+                            <p class="font-semibold">${order.name}</p>
+                            <p class="text-sm text-gray-500">Dropped off at Community Kitchen</p>
+                        </div>
+                        <p class="font-semibold text-green-600">+${order.points} pts</p>
+                    `;
+                    completedOrdersContainer.appendChild(orderEl);
+                });
+            }
+
+            function renderActiveOrderDetail(orderId) {
+                const order = activeOrders.find(o => o.id === orderId);
+                if (!order) { renderActiveOrdersList(); return; }
+                
+                const timeline = {
+                    'accepted': { text: 'Going to Donor', icon: 'check', completed: true },
+                    'picked_up': { text: 'Food Picked Up', icon: 'package', completed: order.status === 'picked_up' || order.status === 'dropped_off' },
+                    'dropped_off': { text: 'Dropped off at Kitchen', icon: 'home', completed: order.status === 'dropped_off' }
+                };
+                
+                activeDeliveryContainer.innerHTML = `
+                    <div class="flex items-center mb-4">
+                        <button id="back-to-list-btn" class="p-1 mr-2 hover:bg-gray-200">
+                            <i data-lucide="arrow-left"></i>
+                        </button>
+                        <div>
+                            <h3 class="font-semibold">Active Pickup</h3>
+                            <p class="text-sm text-gray-500">Pickup #${order.id}</p>
+                        </div>
+                        <p class="font-bold text-lg ml-auto">${order.points} pts</p>
+                    </div>
+                    <ul class="space-y-4 mb-6">
+                        ${Object.values(timeline).map((step, index, arr) => `
+                            <li class="flex items-start">
+                                <div class="flex flex-col items-center mr-4">
+                                    <div class="w-6 h-6 ${step.completed ? `bg-blue-500` : 'border-2 border-gray-300'} flex items-center justify-center text-white">
+                                        ${step.completed ? `<i data-lucide="${step.icon}" class="w-4 h-4"></i>` : ''}
+                                    </div>
+                                    ${index < arr.length - 1 ? `<div class="w-0.5 h-12 ${step.completed && arr[index+1].completed ? `bg-blue-500` : 'bg-gray-200'}"></div>` : ''}
+                                </div>
+                                <div>
+                                    <p class="font-semibold ${step.completed ? '' : 'text-gray-400'}">${step.text}</p>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                    <div class="mt-auto border-t pt-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-semibold">${order.donor.name}</p>
+                                <p class="text-sm text-gray-500">${order.donor.address}</p>
+                            </div>
+                            <a href="tel:${order.donor.phone}" class="p-2 bg-blue-100 text-blue-600 hover:bg-blue-200">
+                                <i data-lucide="phone"></i>
+                            </a>
+                        </div>
+                        ${order.status === 'accepted' ? `
+                            <button data-order-id="${order.id}" class="order-status-btn mt-4 w-full bg-blue-600 text-white py-2 font-semibold flex items-center justify-center gap-2 hover:bg-blue-700" data-next-status="picked_up">
+                                <i data-lucide="package"></i> Food Picked Up
+                            </button>
+                            <button data-order-id="${order.id}" class="navigate-btn mt-2 w-full bg-gray-800 text-white py-2 font-semibold flex items-center justify-center gap-2 hover:bg-gray-900" data-dest="donor">
+                                <i data-lucide="navigation"></i> Navigate to Donor
+                            </button>
+                        ` : ''}
+                        ${order.status === 'picked_up' ? `
+                            <button data-order-id="${order.id}" class="order-status-btn mt-4 w-full bg-green-500 text-white py-2 font-semibold flex items-center justify-center gap-2 hover:bg-green-600" data-next-status="completed">
+                                <i data-lucide="home"></i> Drop Off Food
+                            </button>
+                            <button data-order-id="${order.id}" class="navigate-btn mt-2 w-full bg-gray-800 text-white py-2 font-semibold flex items-center justify-center gap-2 hover:bg-gray-900" data-dest="kitchen">
+                                <i data-lucide="navigation"></i> Navigate to Kitchen
+                            </button>
+                        ` : ''}
+                        ${order.status === 'completed' ? `
+                            <p class="mt-4 w-full text-center font-semibold text-green-600">Collection Completed!</p>
+                        ` : ''}
                     </div>
                 `;
-            });
-        }
-
-        // Update statistics
-        function updateStats() {
-            // Mock data for demonstration
-            const totalDeliveries = 47;
-            const totalEarnings = 12500;
-            const totalDistance = 340;
-            const averageRating = 4.8;
-
-            document.getElementById('totalDeliveries').textContent = totalDeliveries;
-            document.getElementById('totalEarnings').textContent = `₹${totalEarnings}`;
-            document.getElementById('totalDistance').textContent = totalDistance;
-            document.getElementById('averageRating').textContent = averageRating;
-
-            // Earnings breakdown
-            document.getElementById('todayEarnings').textContent = '₹450';
-            document.getElementById('weekEarnings').textContent = '₹2,800';
-            document.getElementById('monthEarnings').textContent = '₹8,500';
-            document.getElementById('monthDeliveries').textContent = '23';
-        }
-
-        // Display available pickup requests
-        function displayAvailableRequests() {
-            const availableRequests = pickupRequests.filter(r => r.status === 'available').slice(0, 6);
-            const container = document.getElementById('availableRequests');
+                lucide.createIcons();
+            }
             
-            if (availableRequests.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <i class="fas fa-truck" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No pickup requests available at the moment.</p>
-                    </div>
-                `;
-                return;
+            function acceptOrder(orderId) {
+                if (!isOnline) {
+                    alert("You must be online to accept pickups.");
+                    return;
+                }
+                
+                // Find order in pending orders
+                const orderIndex = pendingOrders.findIndex(o => o.id === orderId);
+                if (orderIndex === -1) return;
+                
+                // Assign order in database
+                const success = db.assignDonationToRider(orderId, currentRiderId);
+                if (success) {
+                    // Remove from pending and add to active
+                    const [acceptedOrder] = pendingOrders.splice(orderIndex, 1);
+                    acceptedOrder.status = 'accepted';
+                    activeOrders.push(acceptedOrder);
+                    
+                    // Update UI
+                    renderPendingOrders();
+                    renderActiveOrdersList();
+                    drawRoute(riderLocation, acceptedOrder.coords, riderLocationName, acceptedOrder.name);
+                }
             }
 
-            container.innerHTML = availableRequests.map(request => createRequestCard(request, true)).join('');
-        }
+            function updateOrderStatus(orderId, newStatus) {
+                const orderIndex = activeOrders.findIndex(o => o.id === orderId);
+                if (orderIndex === -1) return;
+                
+                const order = activeOrders[orderIndex];
+                
+                // Update in database
+                const success = db.updateDeliveryStatus(orderId, newStatus, currentRiderId);
+                if (!success) return;
 
-        // Display all pickup requests
-        function displayAllRequests() {
-            const container = document.getElementById('allRequests');
-            
-            if (pickupRequests.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No pickup requests available.</p>
-                    </div>
-                `;
-                return;
+                if (newStatus === 'picked_up') {
+                    order.status = newStatus;
+                    riderLocation = L.latLng(order.coords[0], order.coords[1]);
+                    riderLocationName = order.name;
+                    riderMarker.setLatLng(riderLocation);
+                    currentLocationText.textContent = riderLocationName;
+                    renderActiveOrderDetail(orderId);
+                } else if (newStatus === 'completed') {
+                    riderLocation = L.latLng(communityKitchen.coords[0], communityKitchen.coords[1]);
+                    riderLocationName = communityKitchen.name;
+                    riderMarker.setLatLng(riderLocation);
+                    currentLocationText.textContent = riderLocationName;
+                    
+                    todaysPoints += order.points;
+                    totalPoints += order.points;
+                    todaysCollections++;
+                    updateDashboardCards();
+                    
+                    activeOrders.splice(orderIndex, 1);
+                    completedOrders.push(order);
+                    renderActiveOrdersList();
+                    renderCompletedOrders();
+                    clearMapRoute();
+                    map.setView(riderLocation, 13);
+                } else {
+                    order.status = newStatus;
+                    renderActiveOrderDetail(orderId);
+                }
             }
-
-            container.innerHTML = pickupRequests.map(request => createRequestCard(request, request.status === 'available')).join('');
-        }
-
-        // Display active deliveries
-        function displayActiveDeliveries() {
-            const activeRequests = pickupRequests.filter(r => r.status === 'picked' || r.status === 'in_transit');
-            const container = document.getElementById('activeDeliveries');
             
-            if (activeRequests.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <i class="fas fa-clipboard-list" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No active deliveries at the moment.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = activeRequests.map(request => createRequestCard(request, false, true)).join('');
-        }
-
-        // Display delivery history
-        function displayDeliveryHistory() {
-            const completedRequests = pickupRequests.filter(r => r.status === 'completed');
-            const container = document.getElementById('deliveryHistory');
-            
-            if (completedRequests.length === 0) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: var(--muted); grid-column: 1 / -1;">
-                        <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
-                        <p>No completed deliveries yet.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = completedRequests.map(request => createRequestCard(request, false, false, true)).join('');
-        }
-
-        // Create request card HTML
-        function createRequestCard(request, showAcceptAction = false, showDeliveryActions = false, isHistory = false) {
-            const priorityClass = {
-                'high': 'priority-high',
-                'medium': 'priority-medium',
-                'low': 'priority-low'
-            }[request.priority || 'medium'];
-
-            const priorityText = {
-                'high': 'High Priority',
-                'medium': 'Medium Priority',
-                'low': 'Low Priority'
-            }[request.priority || 'medium'];
-
-            const statusClass = {
-                'available': 'status-available',
-                'picked': 'status-in-progress',
-                'in_transit': 'status-in-progress',
-                'completed': 'status-completed'
-            }[request.status] || 'status-available';
-
-            // Calculate estimated distance and earnings
-            const estimatedDistance = Math.floor(Math.random() * 15) + 2; // 2-17 km
-            const estimatedEarnings = estimatedDistance * 15; // ₹15 per km
-            const estimatedTime = Math.ceil(estimatedDistance / 20 * 60); // minutes
-
-            return `
-                <div class="request-card">
-                    <div class="status-indicator ${statusClass}"></div>
-                    <div class="request-header">
-                        <div class="request-title">${request.foodType}</div>
-                        <div class="priority-badge ${priorityClass}">${priorityText}</div>
-                    </div>
-                    <div class="request-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Donor:</span>
-                            <span class="detail-value">${request.donorName}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Quantity:</span>
-                            <span class="detail-value">${request.quantity}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Pickup Time:</span>
-                            <span class="detail-value">${new Date(request.pickupTime).toLocaleString()}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Location:</span>
-                            <span class="detail-value">${request.address}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Contact:</span>
-                            <span class="detail-value">${request.contactNumber}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Distance:</span>
-                            <span class="detail-value">
-                                <span class="distance-badge">${estimatedDistance} km</span>
-                            </span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Estimated Earnings:</span>
-                            <span class="detail-value" style="color: var(--green); font-weight: 700;">₹${estimatedEarnings}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Est. Time:</span>
-                            <span class="detail-value">${estimatedTime} mins</span>
-                        </div>
-                    </div>
-                    ${showAcceptAction ? `
-                    <div class="request-actions">
-                        <button class="btn btn-primary" onclick="acceptRequest('${request._id}')">
-                            <i class="fas fa-check"></i>
-                            Accept Request
-                        </button>
-                        <button class="btn btn-secondary" onclick="viewLocation('${request.address}')">
-                            <i class="fas fa-map-marker-alt"></i>
-                            View Location
-                        </button>
-                    </div>
-                    ` : ''}
-                    ${showDeliveryActions ? `
-                    <div class="request-actions">
-                        <button class="btn btn-success" onclick="markPickedUp('${request._id}')">
-                            <i class="fas fa-box"></i>
-                            Mark Picked Up
-                        </button>
-                        <button class="btn btn-primary" onclick="markDelivered('${request._id}')">
-                            <i class="fas fa-check-circle"></i>
-                            Mark Delivered
-                        </button>
-                        <button class="btn btn-secondary" onclick="contactDonor('${request.contactNumber}')">
-                            <i class="fas fa-phone"></i>
-                            Call Donor
-                        </button>
-                    </div>
-                    ` : ''}
-                    ${isHistory ? `
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--accent-2);">
-                        <div class="detail-row">
-                            <span class="detail-label">Completed:</span>
-                            <span class="detail-value">${new Date(request.completedAt || request.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Earnings:</span>
-                            <span class="detail-value" style="color: var(--green); font-weight: 700;">₹${estimatedEarnings}</span>
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
-            `;
-        }
-
-        // Show different sections
-        function showSection(sectionName) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Remove active class from nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(sectionName).classList.add('active');
-            
-            // Add active class to clicked nav item
-            event.target.closest('.nav-item').classList.add('active');
-        }
-
-        // Accept pickup request
-        function acceptRequest(requestId) {
-            if (confirm('Are you sure you want to accept this pickup request?')) {
-                alert('Request accepted! Please proceed to the pickup location.');
-                // Here you would typically make an API call to update the request status
-                loadPickupRequests();
-            }
-        }
-
-        // Mark as picked up
-        function markPickedUp(requestId) {
-            if (confirm('Confirm that you have picked up the food donation?')) {
-                alert('Pickup confirmed! Please proceed to deliver to the designated location.');
-                loadPickupRequests();
-            }
-        }
-
-        // Mark as delivered
-        function markDelivered(requestId) {
-            if (confirm('Confirm that the food has been successfully delivered?')) {
-                alert('Delivery completed! Earnings have been added to your account.');
-                loadPickupRequests();
-            }
-        }
-
-        // View location on map
-        function viewLocation(address) {
-            const encodedAddress = encodeURIComponent(address);
-            window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
-        }
-
-        // Contact donor
-        function contactDonor(phoneNumber) {
-            if (phoneNumber) {
-                window.open(`tel:${phoneNumber}`);
-            } else {
-                alert('Phone number not available');
-            }
-        }
-
-        // Handle profile form submission
-        document.getElementById('profileForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const token = localStorage.getItem('accessToken');
-            const formData = {
-                name: document.getElementById('profileName').value,
-                phone: document.getElementById('profilePhone').value,
-                address: document.getElementById('profileAddress').value,
-                vehicleType: document.getElementById('vehicleType').value,
-                vehicleNumber: document.getElementById('vehicleNumber').value
+            // --- Page Navigation ---
+            const pages = {
+                'dashboard-link': document.getElementById('dashboard-page'),
+                'analytics-link': document.getElementById('analytics-page'),
+                'profile-link': document.getElementById('profile-page'),
+                'support-link': document.getElementById('support-page'),
             };
+            const navLinks = document.querySelectorAll('aside nav a');
 
-            fetch('/api/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(formData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.user) {
-                    currentUser = data.user;
-                    updateUserInfo();
-                    alert('Profile updated successfully!');
+            function showPage(linkId) {
+                navLinks.forEach(link => {
+                    link.classList.remove('bg-blue-100', 'text-blue-600');
+                    pages[link.id].classList.add('hidden');
+                });
+                
+                document.getElementById(linkId).classList.add('bg-blue-100', 'text-blue-600');
+                pages[linkId].classList.remove('hidden');
+
+                if (linkId === 'dashboard-link' && map) {
+                    setTimeout(() => map.invalidateSize(), 0);
                 }
-            })
-            .catch(error => {
-                console.error('Error updating profile:', error);
-                alert('Error updating profile. Please try again.');
-            });
-        });
+                if (linkId === 'analytics-link') {
+                    renderAnalyticsChart();
+                }
+            }
 
-        // Logout function
-        function logout() {
-            const token = localStorage.getItem('accessToken');
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage(link.id);
+                });
+            });
+
+            // --- Event Listeners ---
+            logoutBtn.addEventListener('click', () => {
+                isOnline = false;
+                onlineToggle.checked = false;
+                updateOnlineStatusUI();
+                alert("You have been logged out.");
+            });
+
+            onlineToggle.addEventListener('change', () => {
+                isOnline = onlineToggle.checked;
+                updateOnlineStatusUI();
+                if (isOnline) {
+                    loadPendingOrders(); // Refresh pending orders when going online
+                }
+            });
             
-            fetch('/api/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
+            document.getElementById('recenter-map').addEventListener('click', () => {
+                if(map) {
+                    map.setView(riderLocation, 13);
                 }
-            })
-            .finally(() => {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                window.location.href = 'login.html';
             });
-        }
+
+            pendingOrdersContainer.addEventListener('click', e => {
+                if (e.target.classList.contains('accept-order-btn')) {
+                    acceptOrder(parseInt(e.target.dataset.orderId));
+                }
+            });
+            
+            activeDeliveryContainer.addEventListener('click', e => {
+                const card = e.target.closest('.active-order-card');
+                const backBtn = e.target.closest('#back-to-list-btn');
+                const statusBtn = e.target.closest('.order-status-btn');
+                const navBtn = e.target.closest('.navigate-btn');
+                
+                if (card) renderActiveOrderDetail(parseInt(card.dataset.orderId));
+                if (backBtn) renderActiveOrdersList();
+                if (statusBtn) updateOrderStatus(parseInt(statusBtn.dataset.orderId), statusBtn.dataset.nextStatus);
+                if (navBtn) {
+                    const order = activeOrders.find(o => o.id === parseInt(navBtn.dataset.orderId));
+                    if (order) {
+                        const startCoords = navBtn.dataset.dest === 'donor' ? riderLocation : order.coords;
+                        const startName = navBtn.dataset.dest === 'donor' ? riderLocationName : order.name;
+                        const destCoords = navBtn.dataset.dest === 'donor' ? order.coords : communityKitchen.coords;
+                        const destName = navBtn.dataset.dest === 'donor' ? order.name : communityKitchen.name;
+                        drawRoute(startCoords, destCoords, startName, destName);
+                    }
+                }
+            });
+
+            // --- Database Subscription ---
+            db.subscribe('dataChanged', (data) => {
+                // Reload rider data when database changes
+                loadRiderData();
+                if (isOnline) {
+                    loadPendingOrders();
+                }
+            });
+            
+            // --- Initial Load ---
+            initializeMap();
+            loadRiderData();
+            updateOnlineStatusUI();
+            renderActiveOrdersList();
+            renderCompletedOrders();
+            showPage('dashboard-link');
+            
+            // Load pending orders if online
+            if (isOnline) {
+                loadPendingOrders();
+            }
+        });
     </script>
 </body>
 </html>
