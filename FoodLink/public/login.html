@@ -1,131 +1,211 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FoodLink - Login</title>
-    <meta name="description" content="Login to FoodLink to donate food and help those in need." />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <style>
-    :root {
-      --brand: #2e7d64;
-      --text: #1b2b22;
-      --muted: #5d6b61;
-      --accent-2: #ecf3ef;
-      --bg: #f7faf7;
-      --shadow-1: 0 2px 10px rgba(0,0,0,0.05);
-      --shadow-2: 0 8px 30px rgba(21,41,32,.1);
-      --ring: 0 0 0 3px rgba(46,125,100,.3);
-      --radius-sm: 12px;
-      --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
-      --pill: linear-gradient(180deg,#ffffff,#eef3ef);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-      line-height:1.5;
-    }
-    
-    /* ---------- Utilities ---------- */
-    .container{max-width:1200px;margin:0 auto;padding:0 24px}
-    .container-wide{max-width:1280px;margin:0 auto;padding:0 24px}
-    .grid{display:grid;gap:24px}
-    .center{text-align:center}
-    .btn{
-      --pad:14px 22px;
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      padding:var(--pad);
-      border-radius:999px;border:0;cursor:pointer;text-decoration:none;
-      color:#fff;background:var(--grad);font-weight:700;
-      box-shadow:var(--shadow-2);
-      transition:transform .18s ease, box-shadow .25s ease, filter .25s ease;
-    }
-    .btn:hover{transform:translateY(-2px);filter:brightness(1.05)}
-    .btn:active{transform:translateY(0)}
-    .btn.ghost{
-      color:var(--brand);background:transparent;border:1.5px solid rgba(46,125,100,.25);box-shadow:none
-    }
-    
-    /* ---------- Decorative Dots / Shapes ---------- */
-    .shape{
-      position:absolute;border-radius:50%;filter:blur(30px);opacity:.25;pointer-events:none
-    }
-    .shape.a{width:240px;height:240px;background:#bfe7d1;left:-60px;top:-60px}
-    .shape.b{width:300px;height:300px;background:#dcefe6;right:-40px;top:-80px}
 
-    /* Styles for Role Selection in Modal */
-    .role-selection {
-        margin-bottom: 24px;
-    }
-    .role-selection p {
-        font-weight: 500;
-        color: var(--muted);
-        margin-bottom: 12px;
-        text-align: center;
-    }
-    .role-options {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-    }
-    .role-option {
-        position: relative;
-    }
-    .role-option input[type="radio"] {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-    .role-option label {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 15px 10px;
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-    }
-    .role-option label i {
-        font-size: 24px;
-        color: var(--muted);
-        margin-bottom: 8px;
-        transition: color 0.3s ease;
-    }
-    .role-option label span {
-        font-weight: 600;
-        color: var(--muted);
-        transition: color 0.3s ease;
-    }
-    .role-option input[type="radio"]:checked + label {
-        border-color: var(--brand);
-        background-color: #f0fdfa;
-    }
-    .role-option input[type="radio"]:checked + label i,
-    .role-option input[type="radio"]:checked + label span {
-        color: var(--brand);
-    }
-    </style>
-    <link rel="stylesheet" href="login.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FoodLink - Login</title>
+        <meta name="description" content="Login to FoodLink to donate food and help those in need." />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
+            rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        <style>
+            :root {
+                --brand: #2e7d64;
+                --text: #1b2b22;
+                --muted: #5d6b61;
+                --accent-2: #ecf3ef;
+                --bg: #f7faf7;
+                --shadow-1: 0 2px 10px rgba(0, 0, 0, 0.05);
+                --shadow-2: 0 8px 30px rgba(21, 41, 32, .1);
+                --ring: 0 0 0 3px rgba(46, 125, 100, .3);
+                --radius-sm: 12px;
+                --grad: linear-gradient(135deg, #2e7d64, #7cc4a1);
+                --pill: linear-gradient(180deg, #ffffff, #eef3ef);
+            }
+
+            * {
+                box-sizing: border-box
+            }
+
+            html,
+            body {
+                height: 100%
+            }
+
+            html {
+                scroll-behavior: smooth
+            }
+
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--text);
+                font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+                line-height: 1.5;
+            }
+
+            /* ---------- Utilities ---------- */
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 24px
+            }
+
+            .container-wide {
+                max-width: 1280px;
+                margin: 0 auto;
+                padding: 0 24px
+            }
+
+            .grid {
+                display: grid;
+                gap: 24px
+            }
+
+            .center {
+                text-align: center
+            }
+
+            .btn {
+                --pad: 14px 22px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
+                padding: var(--pad);
+                border-radius: 999px;
+                border: 0;
+                cursor: pointer;
+                text-decoration: none;
+                color: #fff;
+                background: var(--grad);
+                font-weight: 700;
+                box-shadow: var(--shadow-2);
+                transition: transform .18s ease, box-shadow .25s ease, filter .25s ease;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                filter: brightness(1.05)
+            }
+
+            .btn:active {
+                transform: translateY(0)
+            }
+
+            .btn.ghost {
+                color: var(--brand);
+                background: transparent;
+                border: 1.5px solid rgba(46, 125, 100, .25);
+                box-shadow: none
+            }
+
+            /* ---------- Decorative Dots / Shapes ---------- */
+            .shape {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(30px);
+                opacity: .25;
+                pointer-events: none
+            }
+
+            .shape.a {
+                width: 240px;
+                height: 240px;
+                background: #bfe7d1;
+                left: -60px;
+                top: -60px
+            }
+
+            .shape.b {
+                width: 300px;
+                height: 300px;
+                background: #dcefe6;
+                right: -40px;
+                top: -80px
+            }
+
+            /* Styles for Role Selection in Modal */
+            .role-selection {
+                margin-bottom: 24px;
+            }
+
+            .role-selection p {
+                font-weight: 500;
+                color: var(--muted);
+                margin-bottom: 12px;
+                text-align: center;
+            }
+
+            .role-options {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+            }
+
+            .role-option {
+                position: relative;
+            }
+
+            .role-option input[type="radio"] {
+                position: absolute;
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .role-option label {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 15px 10px;
+                border: 2px solid #dee2e6;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-align: center;
+            }
+
+            .role-option label i {
+                font-size: 24px;
+                color: var(--muted);
+                margin-bottom: 8px;
+                transition: color 0.3s ease;
+            }
+
+            .role-option label span {
+                font-weight: 600;
+                color: var(--muted);
+                transition: color 0.3s ease;
+            }
+
+            .role-option input[type="radio"]:checked+label {
+                border-color: var(--brand);
+                background-color: #f0fdfa;
+            }
+
+            .role-option input[type="radio"]:checked+label i,
+            .role-option input[type="radio"]:checked+label span {
+                color: var(--brand);
+            }
+        </style>
+        <link rel="stylesheet" href="login.css">
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+    </head>
 
     <body>
         <!-- Decorative shapes -->
         <div class="shape a"></div>
         <div class="shape b"></div>
 
-        <nav style="background: white; padding: 1rem; box-shadow: var(--shadow-1); text-align: center; margin-bottom: 2rem;">
-            <a href="dashboard.html" style="font-size: 1.5rem; font-weight: 700; color: var(--brand); text-decoration: none;">FoodLink Home</a>
+        <nav
+            style="background: white; padding: 1rem; box-shadow: var(--shadow-1); text-align: center; margin-bottom: 2rem;">
+            <a href="dashboard.html"
+                style="font-size: 1.5rem; font-weight: 700; color: var(--brand); text-decoration: none;">FoodLink
+                Home</a>
         </nav>
 
         <div class="login-container">
@@ -174,28 +254,20 @@
                         </div>
                     </button>
                 </form>
-                
+
                 <div class="divider">
                     <span>OR</span>
                 </div>
-                
+
                 <div class="google-signin">
                     <div id="g_id_onload"
                         data-client_id="780636743153-a2siktoq6eqke80a6kehi31ffiacn5kv.apps.googleusercontent.com"
-                        data-context="signin"
-                        data-ux_mode="popup"
-                        data-callback="handleCredentialResponse"
+                        data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
                         data-auto_prompt="false">
                     </div>
-                    
-                    <div class="g_id_signin"
-                         data-type="standard"
-                         data-shape="rectangular"
-                         data-theme="outline"
-                         data-text="signin_with"
-                         data-size="large"
-                         data-logo_alignment="center"
-                         data-width="300">
+
+                    <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline"
+                        data-text="signin_with" data-size="large" data-logo_alignment="center" data-width="300">
                     </div>
                 </div>
 
@@ -205,7 +277,8 @@
 
                 <div class="success-message" id="successMessage">
                     <div class="success-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                         </svg>
                     </div>
@@ -252,7 +325,8 @@
 
                     <div class="form-group">
                         <div class="input-group neu-input">
-                            <input type="text" id="modalUsername" name="modalUsername" required autocomplete="username" placeholder=" ">
+                            <input type="text" id="modalUsername" name="modalUsername" required autocomplete="username"
+                                placeholder=" ">
                             <label for="modalUsername">Username</label>
                         </div>
                         <span class="error-message" id="modalUsernameError"></span>
